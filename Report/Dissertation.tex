@@ -22,7 +22,8 @@
 \usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
 \usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
 \usepackage[toc,page]{appendix}
-% These packages are all incorporated in the memoir class to one degree or another...
+\usepackage{xcolor}
+\usepackage[hidelinks,breaklinks,colorlinks,linkcolor={black},citecolor={blue!80!black},urlcolor={blue!80!black}]{hyperref} % make citations clickable links
 
 %header and footer settings
 \pagestyle{fancyplain}
@@ -30,8 +31,8 @@
 \renewcommand{\headrulewidth}{0.5pt}
 \renewcommand{\footrulewidth}{0.5pt}
 \setlength{\headheight}{15pt}
-\fancyhead[L]{Joe Bloggs - 2201882}
-\fancyhead[R]{ SOC10101 Honers Project}
+\fancyhead[L]{Svetlozar Georgiev - 40203970}
+\fancyhead[R]{SOC10101 Honours Project}
 \fancyfoot[L]{}
 \fancyfoot[C]{\thepage}
 
@@ -49,6 +50,15 @@
                                {\bfseries}}
 \makeatother
 
+ % macro for adding figures more easily
+\newcommand{\figuremacro}[5]{
+    \begin{figure}[#1]
+        \centering
+        \caption[#3]{\textbf{#3}#4}
+        \includegraphics[width=#5\columnwidth]{#2}
+        \label{fig:#2}
+    \end{figure}
+}
 
 %this starts the document
 \begin{document}
@@ -63,15 +73,14 @@
 
 %LaTeX let you define the abstract separately so it wont get sucked into the main document.
 \begin{abstract}
-% fill the abstract in here
 \end{abstract}
 \pagebreak
 
 \tableofcontents % is generated for you
 \newpage
 
-\listoftables
-%generated in same way as figures
+\listoftables 
+% generated in same way as figures
 \newpage
 
 \listoffigures
@@ -80,54 +89,121 @@
 \newpage
 
 \section*{Acknowledgements}
-Insert acknowledgements here
+% Insert acknowledgements here
 \subsection*{}
 	I would like to thank my cat, dog and family.
 \newpage
 
+\section{Introduction}
 
-\section{Title of section would go here}
-You can fill out sections as you please. \\ %adds a line brake
+\newpage
+\section{Literature review}
+This chapter discusses the underlying techniques and methodologies...
 
-Most of the formatting is taken care for you but you can add this yourself as you please.
+\subsection{Artificial intelligence}
+The Oxford dictionary [citation maybe?] defines \textit{intelligence} as "the ability to acquire and apply knowledge and skills"...
 
-\subsection{Title of subsection would go here}
-Or have sections that are relevant to your main body of work above but warrant there own section. Both - with numbering would be entered into the Table of contents.
+\textit{Artificial Intelligence} (AI) is a multidisciplinary field whose goal is to automate activities that presently require human intelligence \cite[p.~1]{williams1983brief}. \cite[p.~1]{Poole:1997:CIL:275594} define AI as the study of the design of \textit{intelligent agents} (or \textit{rational agents}). Such agents receive percepts from the environment and perform actions, i.e. they implement a function that maps percept sequences to actions \cite[p.~8]{RusselStuart}. The term artificial intelligence is also used to describe a property of machines or programs: the intelligence that the system demonstrates.
 
+The term \textit{artificial}, however, may introduce confusion as it suggests that it is not \textit{real} intelligence. For this reason, different terms may be used in literature - \textit{computational intelligence, synthetic intelligence,} etc. 
 
- \subsubsection{Overview Of Project Content and Milestones}
-
-This is a sub sub section with a list of bullet points.
-\begin{itemize}\itemsep0pt
-	\item A working X, that will be used for this investigation.
-	\item Investigation of current tools and their potential use during an investigation of X .
-	\item Programming of X with related frameworks Y and Z.
-	\item That is all.
+\cite[p.~1]{williams1983brief} summarises the main concerns of AI as:
+\begin{itemize}
+ \item Perception - building models of the physical world from sensory input.
+ \item Manipulation - articulating appendages to affect desired state in the real world.
+ \item Reasoning - understanding higher-level cognitive functions such as planning, drawing conclusions, diagnosing, etc.
+ \item Communication - understanding and conveying information through the use of language. 
+ \item Learning - automatically improving a system's performance based on its experience.
 \end{itemize}
 
 
-\section{Chapter 2}
-And so on for each of the chapters.  The template automatically starts new chapters on a new page.  The associated guidelines tell you what the available styles do and also how to structure a report.
-There is a section break on this page that you should be careful NOT to delete otherwise the references and appendices will be numbered continuously with the rest of the document.
 
-% another example section
-\section{Additional Information / Knowledge Required}
-Experience with Linux and managing Virtual machines, networking.
-So on and so forth...
+The ultimate goal of AI is to understand the principles that make intelligent behaviour possible, in natural or artificial systems \cite[p.~1]{Poole:1997:CIL:275594}.
+
+Several subfields of AI exist. The focus in this chapter will be on \textit{Natural Language Processing (NLP)} and \textit{Machine Learning} as they are relevant to the project.
+
+\subsection{Natural language processing}
+NLP is an area where AI and linguistics intersect. NLP focuses on making computers understand statements and words written in human language \cite{Khurana2017}. An NLP system should be able to determine the structure of text in order to answer questions about meaning or semantics of the written language \cite[p.~2]{Martinez2010}.
+
+NLP consists of the following areas:
+\begin{itemize}
+    \item \textit{Speech recognition} - taking acoustic signal as input and determining what words were spoken.
+    \item \textit{Natural language understanding} - teaching computers how to understand natural (human language) instead of programming languages.
+    \item \textit{Natural language generation} - the process of producing phrases, sentences and paragraphs that are meaningful form an internal representation \cite[p.~6]{Khurana2017}
+\end{itemize}
+
+Understanding human language is considered a difficult task due to its complexity. For example, words in a sentence can be arranged in an infinite number of ways. Additionally, words can have several meanings and contextual information is necessary to correctly interpret sentences.
+
+The main techniques of understanding natural language are \textit{Syntactic Analysis} and \textit{Semantic Analysis}. The term \textit{syntax} refers to refers to the grammatical structure of the text whereas the term \textit{semantics} refers to the meaning that is conveyed by it. However, problems arise due to the fact that a sentence that is syntactically correct is not always semantically correct.
+
+\subsubsection{Syntactic analysis}
+Syntactic Analysis, also named Syntax Analysis or Parsing is the process of analysing natural language conforming to the rules of a formal grammar. Grammatical rules are applied to categories and groups of words, not individual words. Syntactic Analysis assigns a semantic structure to text.
+
+\subsubsection{Semantic Analysis}
+The word \textit{semantic} is a linguistic term and means something related to meaning or logic.
+For humans, understanding what someone has said is an unconscious process that relies on intuition and knowledge about language itself. Therefore, understanding language is heavily based on meaning and context. Since computers can not rely on these techniques,they need a different approach. 
+
+Semantic Analysis can be defined as the process of understanding the meaning and interpretation of words, signs, and sentence structure. This enables computers partly to understand natural language the way humans do, involving meaning and context.
+
+\subsubsection{Techniques to understand text}
+\begin{itemize}
+    \item Parsing ...
+    \item Stemming ...
+    \item Text segmentation ...
+    \item Relationship extraction ...
+\end{itemize}
+
+...
+
+\subsection{Machine learning}
+\textit{Machine Learning} is the science of getting computers to learn and act like humans do, and improve their learning over time in autonomous fashion, by feeding them data and information in the form of observations and real-world interactions [add reference here]. Traditionally, algorithms are sets of explicitly programmed instructions used by computers to solve a specific problem. Machine learning algorithms, however, allow computers to be trained on data inputs and use statistical data analysis in order to output values which fall within a specific range. Because of this, machine learning facilitates computers in building models from sample data in order to automate decision-making processes based on data inputs.
+
+Two of the most widely adopted Machine Learning methods are:
+\begin{itemize}
+    \item \textit{Supervised learning} - trains algorithms based on example input and output data that is manually labelled by humans.
+    \item \textit{Unsupervised learning} - provides the algorithm with no labelled data in order to allow it to find structure within its input data. 
+    \item \textit{Reinforcement learning} - the system attempts to maximize a reward based on its input data.   
+\end{itemize}
+
+\subsubsection{Supervised learning}
+In supervised learning, the computer is provided with example inputs that are labelled with their desired outputs. The purpose of this method is for the algorithm to be able to “learn” by comparing its actual output with the “taught” outputs to find errors, and modify the model accordingly. Supervised learning therefore uses patterns to predict label values on additional unlabelled data. A common use case of supervised learning is to use historical data to predict statistically likely future events.
+
+\subsubsection{Unsupervised learning}
+In unsupervised learning, data is unlabelled, so the learning algorithm is left to find commonalities among its input data. As unlabelled data are more abundant than labelled data, machine learning methods that facilitate unsupervised learning are particularly useful.
+
+\subsubsection{Reinforcement learning}
+
+
+Without being given a specific “correct” answer, unsupervised learning methods can analyse complex data that is more expansive and seemingly unrelated in order to organize it in potentially meaningful ways. Unsupervised learning is often used for anomaly detection including for fraudulent credit card purchases, and systems that recommend what products to buy next.
+
+\subsubsection{Approaches}
+As a field, machine learning is closely related to computational statistics...
+
+Algorithms:
+\begin{itemize}
+    \item \textit{k-nearest neighbour} ...
+    \item \textit{Decision tree learning} ...
+    \item \textit{Deep learning} ...
+\end{itemize}
 
 \newpage
-\begin{thebibliography}{9}
+\section{Implementation}
 
-\bibitem{lamport94}
-  Leslie Lamport,
-  \emph{\LaTeX: A Document Preparation System}.
-  Addison Wesley, Massachusetts,
-  2nd Edition,
-  1994.
+\newpage
+\section{Results and discussions}
 
-\end{thebibliography}
-%example of References. See https://en.wikibooks.org/wiki/LaTeX/Bibliography_Management
-%might be good to use a separate document for these so your main work is not one really long text file. 
+\newpage
+\section{Evaluation}
+
+\newpage
+\section{Conclusions}
+
+\newpage
+\section{Future work}
+
+\newpage
+\bibliographystyle{apalike}
+\bibliography{./references}		 
 
 %you can crate this on a extra tex document just like the title or any other part of the document.
 \newpage
@@ -146,8 +222,6 @@ Insert a copy of the project review form you were given at the end of the review
 \section{Diary Sheets (or other project management evidence)}
 Insert diary sheets here together with any project management plan you have
 
-\section{Appendix 4 and following}
-insert content here and for each of the other appendices, the title may be just on a page by itself, the pages of the appendices are not numbered, unless an included document such as a user manual or design document is itself pager numbered.
 \end{appendices}
 
 \end{document}
