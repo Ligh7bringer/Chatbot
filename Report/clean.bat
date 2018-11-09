@@ -12,4 +12,4 @@ del /s *.ilg
 del /s *.nlo
 del /s *.lof
 del /s *.lot
-del /s report.pdf
+del /s Dissertation.pdf

@@ -24,6 +24,9 @@
 \usepackage[toc,page]{appendix}
 \usepackage{xcolor}
 \usepackage[hidelinks,breaklinks,colorlinks,linkcolor={black},citecolor={blue!80!black},urlcolor={blue!80!black}]{hyperref} % make citations clickable links
+\usepackage{apalike} 
+
+\newcommand{\myparagraph}[1]{\paragraph{#1}\mbox{}\\} %put paragraph headings on their own line!
 
 %header and footer settings
 \pagestyle{fancyplain}
@@ -103,11 +106,11 @@ This chapter discusses the underlying techniques and methodologies...
 \subsection{Artificial intelligence}
 The Oxford dictionary [citation maybe?] defines \textit{intelligence} as "the ability to acquire and apply knowledge and skills"...
 
-\textit{Artificial Intelligence} (AI) is a multidisciplinary field whose goal is to automate activities that presently require human intelligence \cite[p.~1]{williams1983brief}. \cite[p.~1]{Poole:1997:CIL:275594} define AI as the study of the design of \textit{intelligent agents} (or \textit{rational agents}). Such agents receive percepts from the environment and perform actions, i.e. they implement a function that maps percept sequences to actions \cite[p.~8]{RusselStuart}. The term artificial intelligence is also used to describe a property of machines or programs: the intelligence that the system demonstrates.
+\textit{Artificial Intelligence} (AI) is a multidisciplinary field whose goal is to automate activities that presently require human intelligence \cite{williams1983brief}. \cite{Poole:1997:CIL:275594} define AI as the study of the design of \textit{intelligent agents} (or \textit{rational agents}). Such agents receive percepts from the environment and perform actions, i.e. they implement a function that maps percept sequences to actions \cite{RusselStuart}. The term \textit{Artificial Intelligence} is also used to describe a property of machines or programs: the intelligence that the system demonstrates.
 
 The term \textit{artificial}, however, may introduce confusion as it suggests that it is not \textit{real} intelligence. For this reason, different terms may be used in literature - \textit{computational intelligence, synthetic intelligence,} etc. 
 
-\cite[p.~1]{williams1983brief} summarises the main concerns of AI as:
+\cite{williams1983brief} summarises the main concerns of AI as:
 \begin{itemize}
  \item Perception - building models of the physical world from sensory input.
  \item Manipulation - articulating appendages to affect desired state in the real world.
@@ -118,18 +121,18 @@ The term \textit{artificial}, however, may introduce confusion as it suggests th
 
 
 
-The ultimate goal of AI is to understand the principles that make intelligent behaviour possible, in natural or artificial systems \cite[p.~1]{Poole:1997:CIL:275594}.
+The ultimate goal of AI is to understand the principles that make intelligent behaviour possible, in natural or artificial systems \cite{Poole:1997:CIL:275594}.
 
 Several subfields of AI exist. The focus in this chapter will be on \textit{Natural Language Processing (NLP)} and \textit{Machine Learning} as they are relevant to the project.
 
 \subsection{Natural language processing}
-NLP is an area where AI and linguistics intersect. NLP focuses on making computers understand statements and words written in human language \cite{Khurana2017}. An NLP system should be able to determine the structure of text in order to answer questions about meaning or semantics of the written language \cite[p.~2]{Martinez2010}.
+NLP is an area where AI, linguistics and Computer Science intersect. NLP focuses on making computers understand statements and words written in human language \cite{Khurana2017}. An NLP system should be able to determine the structure of text in order to answer questions about meaning or semantics of the written language \cite{Martinez2010}.
 
 NLP consists of the following areas:
 \begin{itemize}
     \item \textit{Speech recognition} - taking acoustic signal as input and determining what words were spoken.
     \item \textit{Natural language understanding} - teaching computers how to understand natural (human language) instead of programming languages.
-    \item \textit{Natural language generation} - the process of producing phrases, sentences and paragraphs that are meaningful form an internal representation \cite[p.~6]{Khurana2017}
+    \item \textit{Natural language generation} - the process of producing phrases, sentences and paragraphs that are meaningful form an internal representation \cite{Khurana2017}
 \end{itemize}
 
 Understanding human language is considered a difficult task due to its complexity. For example, words in a sentence can be arranged in an infinite number of ways. Additionally, words can have several meanings and contextual information is necessary to correctly interpret sentences.
@@ -137,11 +140,11 @@ Understanding human language is considered a difficult task due to its complexit
 The main techniques of understanding natural language are \textit{Syntactic Analysis} and \textit{Semantic Analysis}. The term \textit{syntax} refers to refers to the grammatical structure of the text whereas the term \textit{semantics} refers to the meaning that is conveyed by it. However, problems arise due to the fact that a sentence that is syntactically correct is not always semantically correct.
 
 \subsubsection{Syntactic analysis}
-Syntactic Analysis, also named Syntax Analysis or Parsing is the process of analysing natural language conforming to the rules of a formal grammar. Grammatical rules are applied to categories and groups of words, not individual words. Syntactic Analysis assigns a semantic structure to text.
+\textit{Syntactic Analysis}, also named Syntax Analysis or Parsing is the process of analysing natural language conforming to the rules of a formal grammar. Grammatical rules are applied to categories and groups of words, not individual words. Syntactic Analysis assigns a semantic structure to text.
 
 \subsubsection{Semantic Analysis}
 The word \textit{semantic} is a linguistic term and means something related to meaning or logic.
-For humans, understanding what someone has said is an unconscious process that relies on intuition and knowledge about language itself. Therefore, understanding language is heavily based on meaning and context. Since computers can not rely on these techniques,they need a different approach. 
+For humans, understanding what someone has said is an unconscious process that relies on intuition and knowledge about language itself. Therefore, understanding language is heavily based on meaning and context. Since computers can not rely on these techniques, they need a different approach. 
 
 Semantic Analysis can be defined as the process of understanding the meaning and interpretation of words, signs, and sentence structure. This enables computers partly to understand natural language the way humans do, involving meaning and context.
 
@@ -153,38 +156,94 @@ Semantic Analysis can be defined as the process of understanding the meaning and
     \item Relationship extraction ...
 \end{itemize}
 
+\subsubsection{Natural Language Processing at the word and sentence level}
+The first step to implementing NLP is to parse the sentences into grammatical structures. However, parsing and understanding a natural language from an unbounded domain has proven extremely difficult as because of the complexity of natural languages, word ambiguity, and rules of grammar \cite{Martinez2010}. 
+
+\myparagraph{\textit{Word sense disambiguation}}
+Problems arise because words can have different meanings or senses based on the context, domain of discourse, etc. This is know as \textit{polysemy}. The goal of \textit{disambiguation} is to decide which of the meanings of a word should be attached to a specific use of the word. The methods to achieve can be categorised as \textit{supervised}, \textit{unsupervised} and \textit{dictionary based}. Pantel and Lin approach...
+
+\myparagraph{\textit{Part-of-speech tagging}}
+Some words can be used as a different part of speech...
+
+\myparagraph{\textit{Parsing}}  
+\textit{Parsing} is the process of grouping sentence components into syntactic structures \cite{Martinez2010}. Some approaches to achieve this are \textit{HMMs} and \textit{probabilistic context-free grammars (PCFGs)}...
+
+\subsubsection{Natural Language Processing at the document level}
 ...
 
 \subsection{Machine learning}
-\textit{Machine Learning} is the science of getting computers to learn and act like humans do, and improve their learning over time in autonomous fashion, by feeding them data and information in the form of observations and real-world interactions [add reference here]. Traditionally, algorithms are sets of explicitly programmed instructions used by computers to solve a specific problem. Machine learning algorithms, however, allow computers to be trained on data inputs and use statistical data analysis in order to output values which fall within a specific range. Because of this, machine learning facilitates computers in building models from sample data in order to automate decision-making processes based on data inputs.
+\textit{Machine Learning} is the science of getting computers to learn and act like humans do, and improve their learning over time in autonomous fashion, by feeding them data and information in the form of observations and real-world interactions [ reference here]. Traditionally, algorithms are sets of explicitly programmed instructions used by computers to solve a specific problem. Machine learning algorithms, however, allow computers to be trained on data inputs and use statistical data analysis in order to output values which fall within a specific range. Because of this, machine learning facilitates computers in building models from sample data in order to automate decision-making processes based on data inputs.
 
-Two of the most widely adopted Machine Learning methods are:
+The most widely adopted Machine Learning methods are:
 \begin{itemize}
     \item \textit{Supervised learning} - trains algorithms based on example input and output data that is manually labelled by humans.
     \item \textit{Unsupervised learning} - provides the algorithm with no labelled data in order to allow it to find structure within its input data. 
+    \item \textit{Semi-supervised learning} - 
     \item \textit{Reinforcement learning} - the system attempts to maximize a reward based on its input data.   
 \end{itemize}
 
 \subsubsection{Supervised learning}
 In supervised learning, the computer is provided with example inputs that are labelled with their desired outputs. The purpose of this method is for the algorithm to be able to “learn” by comparing its actual output with the “taught” outputs to find errors, and modify the model accordingly. Supervised learning therefore uses patterns to predict label values on additional unlabelled data. A common use case of supervised learning is to use historical data to predict statistically likely future events.
 
+\myparagraph{\textit{Classification}}
+The classification based tasks are a sub-field under supervised Machine Learning, where the key objective
+is to predict output labels or responses that are categorical in nature for input data based on what the model
+has learned in the training phase. Output labels here are also known as classes or class labels are these are
+categorical in nature meaning they are unordered and discrete values. Thus, each output response belongs
+to a specific discrete class or category \cite{Kononenko2007}.
+Popular classification algorithms include \textit{logistic regression, support vector machines, neural networks},
+\textit{ensembles} such as \textit{random forests} and \textit{gradient boosting, K-nearest neighbours, decision trees}, etc.
+
+\myparagraph{\textit{Regression}}
+Machine Learning tasks where the main objective is value estimation can be termed as regression tasks.
+Regression based methods are trained on input data samples having output responses that are continuous
+numeric values unlike classification, where we have discrete categories or classes. Regression models
+make use of input data attributes or features (also called explanatory or independent variables) and their
+corresponding continuous numeric output values (also called as response, dependent, or outcome variable)
+to learn specific relationships and associations between the inputs and their corresponding outputs. With
+this knowledge, it can predict output responses for new, unseen data instances similar to classification but
+with continuous numeric outputs \cite{Kononenko2007}.
+
+\begin{itemize}
+    \item \textit{Simple linear regression}
+    \item \textit{Multiple regression}
+    \item \textit{Polynomial regression}
+    \item \textit{Non-linear regression}
+    \item \textit{Lasso regression}
+    \item \textit{Ridge regression}
+    \item \textit{Generalised linear models}
+\end{itemize}
+
 \subsubsection{Unsupervised learning}
 In unsupervised learning, data is unlabelled, so the learning algorithm is left to find commonalities among its input data. As unlabelled data are more abundant than labelled data, machine learning methods that facilitate unsupervised learning are particularly useful.
 
-\subsubsection{Reinforcement learning}
+Without being given a specific “correct” answer, unsupervised learning methods can analyse complex data that is more expansive and seemingly unrelated in order to organise it in potentially meaningful ways. Unsupervised learning is often used for anomaly detection including for fraudulent credit card purchases, and systems that recommend what products to buy next.
 
+The aim of supervised is extracting meaningful insights from data, rather than trying to predict an outcome based on training data \cite{Kononenko2007}. More uncertainty exists with unsupervised training, however....
 
-Without being given a specific “correct” answer, unsupervised learning methods can analyse complex data that is more expansive and seemingly unrelated in order to organize it in potentially meaningful ways. Unsupervised learning is often used for anomaly detection including for fraudulent credit card purchases, and systems that recommend what products to buy next.
-
-\subsubsection{Approaches}
-As a field, machine learning is closely related to computational statistics...
-
-Algorithms:
+Unsupervised learning methods can be categorised as:
 \begin{itemize}
-    \item \textit{k-nearest neighbour} ...
-    \item \textit{Decision tree learning} ...
-    \item \textit{Deep learning} ...
+    \item \textit{Clustering} - 
+    \item \textit{Dimensionality reduction} -
+    \item \textit{Anomaly detection} - 
+    \item \textit{Association rule-mining} -
 \end{itemize}
+
+\subsubsection{Semi-supervised learning}
+\textit{Semi-supervised learning} methods combine a lot of unlabelled data and a small amount of labelled and pre-annotated data. The possible techniques that can be used are \textit{graph-based methods}, \textit{generative methods}, and \textit{heuristic-based methods}. 
+A simple approach would be building a supervised model based on labelled data, which is limited, and
+then applying the same to large amounts of unlabelled data to get more labelled samples, train the model on them and repeat the process. Another approach would be to use unsupervised algorithms to cluster similar data samples, use human-in-the-loop efforts to manually annotate or label these groups, and then use a combination of this information in the future. This approach is used in many image tagging systems. 
+
+\subsubsection{Reinforcement learning}
+Reinforcement Learning is a type of machine learning technique that enables an agent to learn in an interactive environment by trial and error using feedback from its own actions and experiences. 
+
+Typically the agent starts with a set of strategies or policies for interacting with the environment. On observing the environment, it takes a particular action based on a rule or policy and by observing the current state of the environment. Based on the action, the agent gets a reward, which could be beneficial or detrimental in the form of a penalty. It updates its current policies and strategies if needed. This iterative process continues until it learns enough about its environment to get the desired rewards. 
+
+As compared to unsupervised learning, reinforcement learning is different in terms of goals. While the goal in unsupervised learning is to find similarities and differences between data points, in reinforcement learning the goal is to find a suitable action model that would maximize the total cumulative reward of the agent. 
+
+\subsection{Chatbots}
+...
+\subsubsection{History}
 
 \newpage
 \section{Implementation}
