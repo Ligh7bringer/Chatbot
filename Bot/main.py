@@ -1,47 +1,50 @@
-# -*- coding: utf-8 -*-
 from chatterbot import ChatBot
-from settings import TWITTER
+from chatterbot.trainers import ChatterBotCorpusTrainer
+from chatterbot.conversation import Statement
 import logging
 
-# enable verbose logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
-# create chatbot instance and set it up to use the Twitter trainer
-chatbot = ChatBot(
-    "TwitterBot",
-    logic_adapters=[
-        "chatterbot.logic.BestMatch",
-        # "chatterbot.logic.MathematicalEvaluation",
-        # "chatterbot.logic.TimeLogicAdapter",
-        # {
-        #     'import_path': 'chatterbot.logic.LowConfidenceAdapter',
-        #     'threshold': 0.65,
-        #     'default_response': 'I am sorry, but I do not understand.'
-        # }
-    ],
-    preprocessors=[
-        'chatterbot.preprocessors.clean_whitespace',
-    ],
-    database_uri="sqlite:///db.sqlite3",
-    twitter_consumer_key=TWITTER["CONSUMER_KEY"],
-    twitter_consumer_secret=TWITTER["CONSUMER_SECRET"],
-    twitter_access_token_key=TWITTER["ACCESS_TOKEN"],
-    twitter_access_token_secret=TWITTER["ACCESS_TOKEN_SECRET"],
-    trainer='custom_trainer.TwitterTrainer',
-    twitter_lang="en",
-    random_seed_word="hi"
+bot = ChatBot(
+    "C++ bot",
+    storage_adapter="chatterbot.storage.SQLStorageAdapter",
+    database="botData.sqlite3"
 )
 
-# train
-chatbot.train()
+
+def get_feedback():
+    text = input()
+    if 'y' in text.lower():
+        return True
+    elif 'n' in text.lower():
+        return False
+    else:
+        print('Please type either "y" or "n"')
+        return get_feedback()
+
+
+should_train = input("Should I train? [y/n] ")
+if should_train.lower() == "y":
+    trainer = ChatterBotCorpusTrainer(bot)
+    trainer.train("data/data.yml")
 
 # get user input and print a response
 while True:
     try:
         user_input = input("\nYou: ")
-        response = chatbot.get_response(user_input)
-        print("{}: {}".format(chatbot.name, response))
+        response = bot.get_response(user_input)
+        print("{}: {}".format(bot.name, response))
+
+        print('\nIs this a coherent response to "{}"? [y/n]'.format(user_input))
+
+        if not get_feedback():
+            print('Correct response:')
+            correct_response = Statement(text=input())
+            bot.learn_response(correct_response, Statement(user_input))
+            print('Responses added to bot!')
 
     # press ctrl-c or ctrl-d on the keyboard to exit
     except (KeyboardInterrupt, EOFError, SystemExit):
+        print("Exiting...")
         break
+
