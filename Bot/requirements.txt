@@ -1,0 +1,9 @@
+# Used by pip to install required python packages
+# Usage: pip install -r requirements.txt
+
+Flask
+chatterbot
+SQLAlchemy
+requests
+ruamel.yaml
+bs4

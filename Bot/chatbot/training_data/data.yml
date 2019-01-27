@@ -1,0 +1,1692 @@
+categories:
+- SO
+- C++
+conversations:
+- - Why is it faster to process a sorted array than an unsorted array?
+  - "\n\nYou are a victim of \nbranch prediction\n fail.\n\n\n\n\n\n\nWhat is Branch\
+    \ Prediction?\n\n\n\nConsider a railroad junction:\n\n\n\n\n\nImage\n by Mecanismo,\
+    \ via Wikimedia Commons. Used under the \nCC-By-SA 3.0\n license.\n\n\n\nNow for\
+    \ the sake of argument, suppose this is back in the 1800s - before long distance\
+    \ or radio communication.\n\n\n\nYou are the operator of a junction and you hear\
+    \ a train coming. You have no idea which way it is supposed to go. You stop the\
+    \ train to ask the driver which direction they want. And then you set the switch\
+    \ appropriately.\n\n\n\nTrains are heavy and have a lot of inertia. So they take\
+    \ forever to start up and slow down.\n\n\n\nIs there a better way? You guess which\
+    \ direction the train will go!\n\n\n\n\n\nIf you guessed right, it continues on.\n\
+    \n\nIf you guessed wrong, the captain will stop, back up, and yell at you to flip\
+    \ the switch. Then it can restart down the other path.\n\n\n\n\n\nIf you guess\
+    \ right every time\n, the train will never have to stop.\n\n\nIf you guess wrong\
+    \ too often\n, the train will spend a lot of time stopping, backing up, and restarting.\n\
+    \n\n\n\n\n\nConsider an if-statement:\n At the processor level, it is a branch\
+    \ instruction:\n\n\n\n\n\n\nYou are a processor and you see a branch. You have\
+    \ no idea which way it will go. What do you do? You halt execution and wait until\
+    \ the previous instructions are complete. Then you continue down the correct path.\n\
+    \n\n\nModern processors are complicated and have long pipelines. So they take\
+    \ forever to \"warm up\" and \"slow down\".\n\n\n\nIs there a better way? You\
+    \ guess which direction the branch will go!\n\n\n\n\n\nIf you guessed right, you\
+    \ continue executing.\n\n\nIf you guessed wrong, you need to flush the pipeline\
+    \ and roll back to the branch. Then you can restart down the other path.\n\n\n\
+    \n\n\nIf you guess right every time\n, the execution will never have to stop.\n\
+    \n\nIf you guess wrong too often\n, you spend a lot of time stalling, rolling\
+    \ back, and restarting.\n\n\n\n\n\n\nThis is branch prediction. I admit it's not\
+    \ the best analogy since the train could just signal the direction with a flag.\
+    \ But in computers, the processor doesn't know which direction a branch will go\
+    \ until the last moment.\n\n\n\nSo how would you strategically guess to minimize\
+    \ the number of times that the train must back up and go down the other path?\
+    \ You look at the past history! If the train goes left 99% of the time, then you\
+    \ guess left. If it alternates, then you alternate your guesses. If it goes one\
+    \ way every 3 times, you guess the same...\n\n\n\nIn other words, you try to identify\
+    \ a pattern and follow it.\n This is more or less how branch predictors work.\n\
+    \n\n\nMost applications have well-behaved branches. So modern branch predictors\
+    \ will typically achieve >90% hit rates. But when faced with unpredictable branches\
+    \ with no recognizable patterns, branch predictors are virtually useless.\n\n\n\
+    \nFurther reading: \n\"Branch predictor\" article on Wikipedia\n.\n\n\n\n\n\n\n\
+    As hinted from above, the culprit is this if-statement:\n\n\n\nif (data[c] >=\
+    \ 128)\n    sum += data[c];\n\n\n\n\nNotice that the data is evenly distributed\
+    \ between 0 and 255. \nWhen the data is sorted, roughly the first half of the\
+    \ iterations will not enter the if-statement. After that, they will all enter\
+    \ the if-statement.\n\n\n\nThis is very friendly to the branch predictor since\
+    \ the branch consecutively goes the same direction many times.\nEven a simple\
+    \ saturating counter will correctly predict the branch except for the few iterations\
+    \ after it switches direction.\n\n\n\nQuick visualization:\n\n\n\nT = branch taken\n\
+    N = branch not taken\n\ndata[] = 0, 1, 2, 3, 4, ... 126, 127, 128, 129, 130, ...\
+    \ 250, 251, 252, ...\nbranch = N  N  N  N  N  ...   N    N    T    T    T  ...\
+    \   T    T    T  ...\n\n       = NNNNNNNNNNNN ... NNNNNNNTTTTTTTTT ... TTTTTTTTTT\
+    \  (easy to predict)\n\n\n\n\nHowever, when the data is completely random, the\
+    \ branch predictor is rendered useless because it can't predict random data.\n\
+    Thus there will probably be around 50% misprediction. (no better than random guessing)\n\
+    \n\n\ndata[] = 226, 185, 125, 158, 198, 144, 217, 79, 202, 118,  14, 150, 177,\
+    \ 182, 133, ...\nbranch =   T,   T,   N,   T,   T,   T,   T,  N,   T,   N,   N,\
+    \   T,   T,   T,   N  ...\n\n       = TTNTTTTNTNNTTTN ...   (completely random\
+    \ - hard to predict)\n\n\n\n\n\n\n\nSo what can be done?\n\n\n\nIf the compiler\
+    \ isn't able to optimize the branch into a conditional move, you can try some\
+    \ hacks if you are willing to sacrifice readability for performance.\n\n\n\nReplace:\n\
+    \n\n\nif (data[c] >= 128)\n    sum += data[c];\n\n\n\n\nwith:\n\n\n\nint t = (data[c]\
+    \ - 128) >> 31;\nsum += ~t & data[c];\n\n\n\n\nThis eliminates the branch and\
+    \ replaces it with some bitwise operations.\n\n\n\n(Note that this hack is not\
+    \ strictly equivalent to the original if-statement. But in this case, it's valid\
+    \ for all the input values of \ndata[]\n.)\n\n\n\nBenchmarks: Core i7 920 @ 3.5\
+    \ GHz\n\n\n\nC++ - Visual Studio 2010 - x64 Release\n\n\n\n//  Branch - Random\n\
+    seconds = 11.777\n\n//  Branch - Sorted\nseconds = 2.352\n\n//  Branchless - Random\n\
+    seconds = 2.564\n\n//  Branchless - Sorted\nseconds = 2.587\n\n\n\n\nJava - Netbeans\
+    \ 7.1.1 JDK 7 - x64\n\n\n\n//  Branch - Random\nseconds = 10.93293813\n\n//  Branch\
+    \ - Sorted\nseconds = 5.643797077\n\n//  Branchless - Random\nseconds = 3.113581453\n\
+    \n//  Branchless - Sorted\nseconds = 3.186068823\n\n\n\n\nObservations:\n\n\n\n\
+    \n\nWith the Branch:\n There is a huge difference between the sorted and unsorted\
+    \ data.\n\n\nWith the Hack:\n There is no difference between sorted and unsorted\
+    \ data.\n\n\nIn the C++ case, the hack is actually a tad slower than with the\
+    \ branch when the data is sorted.\n\n\n\n\n\nA general rule of thumb is to avoid\
+    \ data-dependent branching in critical loops. (such as in this example)\n\n\n\n\
+    \n\n\nUpdate:\n\n\n\n\n\nGCC 4.6.1 with \n-O3\n or \n-ftree-vectorize\n on x64\
+    \ is able to generate a conditional move. So there is no difference between the\
+    \ sorted and unsorted data - both are fast.\n\n\nVC++ 2010 is unable to generate\
+    \ conditional moves for this branch even under \n/Ox\n.\n\n\nIntel Compiler 11\
+    \ does something miraculous. It \ninterchanges the two loops\n, thereby hoisting\
+    \ the unpredictable branch to the outer loop. So not only is it immune the mispredictions,\
+    \ it is also twice as fast as whatever VC++ and GCC can generate! In other words,\
+    \ ICC took advantage of the test-loop to defeat the benchmark...\n\n\nIf you give\
+    \ the Intel Compiler the branchless code, it just out-right vectorizes it... and\
+    \ is just as fast as with the branch (with the loop interchange).\n\n\n\n\n\n\
+    This goes to show that even mature modern compilers can vary wildly in their ability\
+    \ to optimize code...\n\n    "
+- - Why is it faster to process a sorted array than an unsorted array?
+  - "\n\nBranch prediction.\n\n\n\nWith a sorted array, the condition \ndata[c] >=\
+    \ 128\n is first \nfalse\n for a streak of values, then becomes \ntrue\n for all\
+    \ later values. That's easy to predict. With an unsorted array, you pay for the\
+    \ branching cost.\n\n    "
+- - Why is it faster to process a sorted array than an unsorted array?
+  - "\n\nThe reason why performance improves drastically when the data is sorted is\
+    \ that the branch prediction penalty is removed, as explained beautifully in \n\
+    Mysticial\n's answer.\n\n\n\nNow, if we look at the code\n\n\n\nif (data[c] >=\
+    \ 128)\n    sum += data[c];\n\n\n\n\nwe can find that the meaning of this particular\
+    \ \nif... else...\n branch is to add something when a condition is satisfied.\
+    \ This type of branch can be easily transformed into a \nconditional move\n statement,\
+    \ which would be compiled into a conditional move instruction: \ncmovl\n, in an\
+    \ \nx86\n system. The branch and thus the potential branch prediction penalty\
+    \ is removed.\n\n\n\nIn \nC\n, thus \nC++\n, the statement, which would compile\
+    \ directly (without any optimization) into the conditional move instruction in\
+    \ \nx86\n, is the ternary operator \n... ? ... : ...\n. So we rewrite the above\
+    \ statement into an equivalent one:\n\n\n\nsum += data[c] >=128 ? data[c] : 0;\n\
+    \n\n\n\nWhile maintaining readability, we can check the speedup factor.\n\n\n\n\
+    On an Intel \nCore i7\n-2600K @ 3.4 GHz and Visual Studio 2010 Release Mode, the\
+    \ benchmark is (format copied from Mysticial):\n\n\n\nx86\n\n\n\n//  Branch -\
+    \ Random\nseconds = 8.885\n\n//  Branch - Sorted\nseconds = 1.528\n\n//  Branchless\
+    \ - Random\nseconds = 3.716\n\n//  Branchless - Sorted\nseconds = 3.71\n\n\n\n\
+    \nx64\n\n\n\n//  Branch - Random\nseconds = 11.302\n\n//  Branch - Sorted\n seconds\
+    \ = 1.830\n\n//  Branchless - Random\nseconds = 2.736\n\n//  Branchless - Sorted\n\
+    seconds = 2.737\n\n\n\n\nThe result is robust in multiple tests. We get a great\
+    \ speedup when the branch result is unpredictable, but we suffer a little bit\
+    \ when it is predictable. In fact, when using a conditional move, the performance\
+    \ is the same regardless of the data pattern.\n\n\n\nNow let's look more closely\
+    \ by investigating the \nx86\n assembly they generate. For simplicity, we use\
+    \ two functions \nmax1\n and \nmax2\n.\n\n\n\nmax1\n uses the conditional branch\
+    \ \nif... else ...\n:\n\n\n\nint max1(int a, int b) {\n    if (a > b)\n      \
+    \  return a;\n    else\n        return b;\n}\n\n\n\n\nmax2\n uses the ternary\
+    \ operator \n... ? ... : ...\n:\n\n\n\nint max2(int a, int b) {\n    return a\
+    \ > b ? a : b;\n}\n\n\n\n\nOn a x86-64 machine, \nGCC -S\n generates the assembly\
+    \ below.\n\n\n\n:max1\n    movl    %edi, -4(%rbp)\n    movl    %esi, -8(%rbp)\n\
+    \    movl    -4(%rbp), %eax\n    cmpl    -8(%rbp), %eax\n    jle     .L2\n   \
+    \ movl    -4(%rbp), %eax\n    movl    %eax, -12(%rbp)\n    jmp     .L4\n.L2:\n\
+    \    movl    -8(%rbp), %eax\n    movl    %eax, -12(%rbp)\n.L4:\n    movl    -12(%rbp),\
+    \ %eax\n    leave\n    ret\n\n:max2\n    movl    %edi, -4(%rbp)\n    movl    %esi,\
+    \ -8(%rbp)\n    movl    -4(%rbp), %eax\n    cmpl    %eax, -8(%rbp)\n    cmovge\
+    \  -8(%rbp), %eax\n    leave\n    ret\n\n\n\n\nmax2\n uses much less code due\
+    \ to the usage of instruction \ncmovge\n. But the real gain is that \nmax2\n does\
+    \ not involve branch jumps, \njmp\n, which would have a significant performance\
+    \ penalty if the predicted result is not right.\n\n\n\nSo why does a conditional\
+    \ move perform better?\n\n\n\nIn a typical \nx86\n processor, the execution of\
+    \ an instruction is divided into several stages. Roughly, we have different hardware\
+    \ to deal with different stages. So we do not have to wait for one instruction\
+    \ to finish to start a new one. This is called \npipelining\n.\n\n\n\nIn a branch\
+    \ case, the following instruction is determined by the preceding one, so we cannot\
+    \ do pipelining. We have to either wait or predict.\n\n\n\nIn a conditional move\
+    \ case, the execution conditional move instruction is divided into several stages,\
+    \ but the earlier stages like \nFetch\n and \nDecode\n does not depend on the\
+    \ result of the previous instruction; only latter stages need the result. Thus,\
+    \ we wait a fraction of one instruction's execution time. This is why the conditional\
+    \ move version is slower than the branch when prediction is easy.\n\n\n\nThe book\
+    \ \nComputer Systems: A Programmer's Perspective, second edition\n explains this\
+    \ in detail. You can check Section 3.6.6 for \nConditional Move Instructions\n\
+    , entire Chapter 4 for \nProcessor Architecture\n, and Section 5.11.2 for a special\
+    \ treatment for \nBranch Prediction and Misprediction Penalties\n.\n\n\n\nSometimes,\
+    \ some modern compilers can optimize our code to assembly with better performance,\
+    \ sometimes some compilers can't (the code in question is using Visual Studio's\
+    \ native compiler). Knowing the performance difference between branch and conditional\
+    \ move when unpredictable can help us write code with better performance when\
+    \ the scenario gets so complex that the compiler can not optimize them automatically.\n\
+    \n    "
+- - What is the “-->” operator in C++?
+  - "\n\n-->\n is not an operator. It is in fact two separate operators, \n--\n and\
+    \ \n>\n.\n\n\n\nThe conditional's code decrements \nx\n, while returning \nx\n\
+    's original (not decremented) value, and then compares the original value with\
+    \ \n0\n using the \n>\n operator.\n\n\n\nTo better understand, the statement could\
+    \ be written as follows:\n\n\n\nwhile( (x--) > 0 )\n\n\n    "
+- - What is the “-->” operator in C++?
+  - "\n\nOr for something completely different... x slides to 0\n\n\n\nwhile (x --\\\
+    \n            \\\n             \\\n              \\\n               > 0)\n   \
+    \  printf(\"%d \", x);\n\n\n\n\nNot so mathematical, but... every picture paints\
+    \ a thousand words...\n\n    "
+- - What is the “-->” operator in C++?
+  - "\n\nThat's a very complicated operator, so even \nISO/IEC JTC1 (Joint Technical\
+    \ Committee 1)\n placed its description in two different parts of the C++ Standard.\n\
+    \n\n\nJoking aside, they are two different operators: \n--\n and \n>\n described\
+    \ respectively in §5.2.6/2 and §5.9 of the C++03 Standard.\n\n    "
+- - The Definitive C++ Book Guide and List
+  - "\n\nBeginner\n\n\n\nIntroductory, no previous programming experience\n\n\n\n\n\
+    \nC++ Primer\n * (Stanley Lippman, Josée Lajoie, and Barbara E. Moo)  (\nupdated\
+    \ for C++11\n) Coming at 1k pages, this is a very thorough introduction into C++\
+    \ that covers just about everything in the language in a very accessible format\
+    \ and in great detail. The fifth edition (released August 16, 2012) covers C++11.\
+    \ \n[Review]\n \n\n\nProgramming: Principles and Practice Using C++\n (Bjarne\
+    \ Stroustrup, 2nd Edition - May 25, 2014) (\nupdated for C++11/C++14\n) An introduction\
+    \ to programming using C++ by the creator of the language. A good read, that assumes\
+    \ no previous programming experience, but is not only for beginners. \n\n\n\n\n\
+    \n\n* Not to be confused with \nC++ Primer Plus\n (Stephen Prata), with a significantly\
+    \ less favorable \nreview\n.\n\n\n\n\nIntroductory, with previous programming\
+    \ experience\n\n\n\n\n\nA Tour of C++\n (Bjarne Stroustrup) (\n2nd edition  for\
+    \ C++17\n) The “tour” is a quick (about 180 pages and 14 chapters) tutorial overview\
+    \ of all of standard C++ (language and standard library, \nand using C++11\n)\
+    \ at a moderately high level for people who already know C++ or at least are experienced\
+    \ programmers. This book is an extended version of the material that constitutes\
+    \ Chapters 2-5 of The C++ Programming Language, 4th edition.\n\n\nAccelerated\
+    \ C++\n (Andrew Koenig and Barbara Moo, 1st Edition - August 24, 2000)  This basically\
+    \ covers the same ground as the \nC++ Primer\n, but does so on a fourth of its\
+    \ space. This is largely because it does not attempt to be an introduction to\
+    \ \nprogramming\n, but an introduction to \nC++\n for people who've previously\
+    \ programmed in some other language. It has a steeper learning curve, but, for\
+    \ those who can cope with this, it is a very compact introduction to the language.\
+    \ (Historically, it broke new ground by being the first beginner's book to use\
+    \ a modern approach to teaching the language.) Despite this, the C++\nit teaches\
+    \ is purely C++98. \n[Review]\n\n\n\n\n\nBest practices\n\n\n\n\n\nEffective C++\n\
+    \ (Scott Meyers, 3rd Edition - May 22, 2005)  This was written with the aim of\
+    \ being the best second book C++ programmers should read, and it succeeded. Earlier\
+    \ editions were aimed at programmers coming from C, the third edition changes\
+    \ this and targets programmers coming from languages like Java. It presents ~50\
+    \ easy-to-remember rules of thumb along with their rationale in a very accessible\
+    \ (and enjoyable) style. For C++11 and C++14 the examples and a few issues are\
+    \ outdated and Effective Modern C++ should be preferred. \n[Review]\n\n\nEffective\
+    \ Modern C++\n (Scott Meyers) This is basically the new version of \nEffective\
+    \ C++\n, aimed at C++ programmers making the transition from C++03 to C++11 and\
+    \ C++14. \n\n\nEffective STL\n (Scott Meyers)  This aims to do the same to the\
+    \ part of the standard library coming from the STL what \nEffective C++\n did\
+    \ to the language as a whole: It presents rules of thumb along with their rationale.\
+    \ \n[Review]\n\n\n\n\n\n\n\n\nIntermediate\n\n\n\n\n\nMore Effective C++\n (Scott\
+    \ Meyers) Even more rules of thumb than \nEffective C++\n. Not as important as\
+    \ the ones in the first book, but still good to know.\n\n\nExceptional C++\n (Herb\
+    \ Sutter)  Presented as a set of puzzles, this has one of the best and thorough\
+    \ discussions of the proper resource management and exception safety in C++ through\
+    \ Resource Acquisition is Initialization (RAII) in addition to in-depth coverage\
+    \ of a variety of other topics including the pimpl idiom, name lookup, good class\
+    \ design, and the C++ memory model. \n[Review]\n\n\nMore Exceptional C++\n (Herb\
+    \ Sutter)  Covers additional exception safety topics not covered in \nExceptional\
+    \ C++\n, in addition to discussion of effective object-oriented programming in\
+    \ C++ and correct use of the STL. \n[Review]\n\n\nExceptional C++ Style\n (Herb\
+    \ Sutter)  Discusses generic programming, optimization, and resource management;\
+    \ this book also has an excellent exposition of how to write modular code in C++\
+    \ by using non-member functions and the single responsibility principle. \n[Review]\n\
+    \n\nC++ Coding Standards\n (Herb Sutter and Andrei Alexandrescu) “Coding standards”\
+    \ here doesn't mean “how many spaces should I indent my code?”  This book contains\
+    \ 101 best practices, idioms, and common pitfalls that can help you to write correct,\
+    \ understandable, and efficient C++ code. \n[Review]\n\n\nC++ Templates: The Complete\
+    \ Guide\n (David Vandevoorde and Nicolai M. Josuttis) This is \nthe\n book about\
+    \ templates as they existed before C++11.  It covers everything from the very\
+    \ basics to some of the most advanced template metaprogramming and explains every\
+    \ detail of how templates work (both conceptually and at how they are implemented)\
+    \ and discusses many common pitfalls.  Has excellent summaries of the One Definition\
+    \ Rule (ODR) and overload resolution in the appendices. A \nsecond edition\n covering\
+    \ C++11, C++14 and C++17 has been already published . \n[Review]\n\n\nC++ 17 -\
+    \ The Complete Guide\n (Nicolai M. Josuttis) This book describes all the new features\
+    \ introduced in the C++17 Standard covering everything from the simple ones like\
+    \ 'Inline Variables', 'constexpr if' all the way up to 'Polymorphic Memory Resources'\
+    \ and 'New and Delete with overaligned Data'.\n\n\n\n\n\n\n\n\nAdvanced\n\n\n\n\
+    \n\nModern C++ Design\n (Andrei Alexandrescu)  A groundbreaking book on advanced\
+    \ generic programming techniques.  Introduces policy-based design, type lists,\
+    \ and fundamental generic programming idioms then explains how many useful design\
+    \ patterns (including small object allocators, functors, factories, visitors,\
+    \ and multi-methods) can be implemented efficiently, modularly, and cleanly using\
+    \ generic programming. \n[Review]\n\n\nC++ Template Metaprogramming\n (David Abrahams\
+    \ and Aleksey Gurtovoy)\n\n\nC++ Concurrency In Action\n (Anthony Williams) A\
+    \ book covering C++11 concurrency support including the thread library, the atomics\
+    \ library, the C++ memory model, locks and mutexes, as well as issues of designing\
+    \ and debugging multithreaded applications.\n\n\nAdvanced C++ Metaprogramming\n\
+    \ (Davide Di Gennaro) A pre-C++11 manual of TMP techniques, focused more on practice\
+    \ than theory.  There are a ton of snippets in this book, some of which are made\
+    \ obsolete by type traits, but the techniques, are nonetheless useful to know.\
+    \  If you can put up with the quirky formatting/editing, it is easier to read\
+    \ than Alexandrescu, and arguably, more rewarding.  For more experienced developers,\
+    \ there is a good chance that you may pick up something about a dark corner of\
+    \ C++ (a quirk) that usually only comes about through extensive experience.\n\n\
+    \n\n\n\n\n\n\nReference Style - All Levels\n\n\n\n\n\nThe C++ Programming Language\n\
+    \ (Bjarne Stroustrup) (\nupdated for C++11\n) The classic introduction to C++\
+    \ by its creator. Written to parallel the classic K&R, this indeed reads very\
+    \ much like it and covers just about everything from the core language to the\
+    \ standard library, to programming paradigms to the language's philosophy. \n\
+    [Review]\n Note: All releases of the C++ standard are tracked in this question:\
+    \ \nWhere do I find the current C++ standard\n.   \n\n\nC++ Standard Library Tutorial\
+    \ and Reference\n (Nicolai Josuttis) (\nupdated for C++11\n) \nThe\n introduction\
+    \ and reference for the C++ Standard Library. The second edition (released on\
+    \ April 9, 2012) covers C++11. \n[Review]\n\n\nThe C++ IO Streams and Locales\n\
+    \ (Angelika Langer and Klaus Kreft)  There's very little to say about this book\
+    \ except that, if you want to know anything about streams and locales, then this\
+    \ is the one place to find definitive answers. \n[Review]\n\n\n\n\n\nC++11/14/17/…\
+    \ References:\n\n\n\n\n\nThe C++\n11\n/\n14\n/\n17\n Standard (INCITS/ISO/IEC\
+    \ 14882:2011/2014/2017)\n This, of course, is the final arbiter of all that is\
+    \ or isn't C++. Be aware, however, that it is intended purely as a reference for\
+    \ \nexperienced\n users willing to devote considerable time and effort to its\
+    \ understanding. The C++17 standard is released in electronic form for 198 Swiss\
+    \ Francs.\n\n\nThe C++17 standard is available, but seemingly not in an economical\
+    \ form – \ndirectly from the ISO\n it costs 198 Swiss Francs (about $200 US).\
+    \ For most people, the \nfinal draft before standardization\n is more than adequate\
+    \ (and free). Many will prefer an \neven newer draft\n, documenting new features\
+    \ that are likely to be included in C++20.\n\n\nOverview of the New C++ (C++11/14)\
+    \ (PDF only)\n (Scott Meyers) (\nupdated for C++14\n) These are the presentation\
+    \ materials (slides and some lecture notes) of a three-day training course offered\
+    \ by Scott Meyers, who's a highly respected author on C++. Even though the list\
+    \ of items is short, the quality is high.\n\n\nThe \nC++ Core Guidelines (C++11/14/17/…)\n\
+    \ (edited by Bjarne Stroustrup and Herb Sutter) is an evolving online document\
+    \ consisting of a set of guidelines for using modern C++ well. The guidelines\
+    \ are focused on relatively higher-level issues, such as interfaces, resource\
+    \ management, memory management and concurrency affecting application architecture\
+    \ and library design. The project was \nannounced at CppCon'15 by Bjarne Stroustrup\
+    \ and others\n and welcomes contributions from the community. Most guidelines\
+    \ are supplemented with a rationale and examples as well as discussions of possible\
+    \ tool support. Many rules are designed specifically to be automatically checkable\
+    \ by static analysis tools.\n\n\nThe \nC++ Super-FAQ\n (Marshall Cline, Bjarne\
+    \ Stroustrup and others) is an effort by the Standard C++ Foundation to unify\
+    \ the C++ FAQs previously maintained individually by Marshall Cline and Bjarne\
+    \ Stroustrup and also incorporating new contributions. The items mostly address\
+    \ issues at an intermediate level and are often written with a humorous tone.\
+    \ Not all items might be fully up to date with the latest edition of the C++ standard\
+    \ yet.\n\n\ncppreference.com (C++03/11/14/17/…)\n (initiated by Nate Kohl) is\
+    \ a wiki that summarizes the basic core-language features and has extensive documentation\
+    \ of the C++ standard library. The documentation is very precise but is easier\
+    \ to read than the official standard document and provides better navigation due\
+    \ to its wiki nature. The project documents all versions of the C++ standard and\
+    \ the site allows filtering the display for a specific version. The project was\
+    \ \npresented by Nate Kohl at CppCon'14\n.\n\n\n\n\n\n\n\n\nClassics / Older\n\
+    \n\n\nNote:\n Some information contained within these books may not be up-to-date\
+    \ or no longer considered best practice.\n\n\n\n\n\nThe Design and Evolution of\
+    \ C++\n (Bjarne Stroustrup)  If you want to know \nwhy\n the language is the way\
+    \ it is, this book is where you find answers. This covers everything \nbefore\
+    \ the standardization\n of C++.\n\n\nRuminations on C++\n - (Andrew Koenig and\
+    \ Barbara Moo) \n[Review]\n\n\nAdvanced C++ Programming Styles and Idioms\n (James\
+    \ Coplien)  A predecessor of the pattern movement, it describes many C++-specific\
+    \ “idioms”. It's certainly a very good book and might still be worth a read if\
+    \ you can spare the time, but quite old and not up-to-date with current C++. \n\
+    \n\nLarge Scale C++ Software Design\n (John Lakos)  Lakos explains techniques\
+    \ to manage very big C++ software projects. Certainly, a good read, if it only\
+    \ was up to date. It was written long before C++ 98 and misses on many features\
+    \ (e.g. namespaces) important for large-scale projects. If you need to work in\
+    \ a big C++ software project, you might want to read it, although you need to\
+    \ take more than a grain of salt with it. The first volume of a new edition is\
+    \ \nexpected in 2018\n.\n\n\nInside the C++ Object Model\n (Stanley Lippman) \
+    \ If you want to know how virtual member functions are commonly implemented and\
+    \ how base objects are commonly laid out in memory in a multi-inheritance scenario,\
+    \ and how all this affects performance, this is where you will find thorough discussions\
+    \ of such topics.\n\n\nThe Annotated C++ Reference Manual\n (Bjarne Stroustrup,\
+    \ Margaret A. Ellis) This book is quite outdated in the fact that it explores\
+    \ the 1989 C++ 2.0 version - Templates, exceptions, namespaces and new casts were\
+    \ not yet introduced. Saying that however, this book goes through the entire C++\
+    \ standard of the time explaining the rationale, the possible implementations,\
+    \ and features of the language. This is not a book to learn programming principles\
+    \ and patterns on C++, but to understand every aspect of the C++ language.\n\n\
+    \nThinking in C++\n (Bruce Eckel, 2nd Edition, 2000).  Two volumes; is a tutorial\
+    \ style \nfree\n set of intro level books. Downloads: \nvol 1\n, \nvol 2\n. Unfortunately\
+    \ they’re marred by a number of trivial errors (e.g. maintaining that temporaries\
+    \ are automatically \nconst\n), with no official errata list. A partial 3\nrd\n\
+    \ party errata list is available at (\nhttp://www.computersciencelab.com/Eckel.htm\n\
+    ), but it’s apparently not maintained.\n\n\nScientific and Engineering C++: An\
+    \ Introduction to Advanced Techniques and Examples\n (John Barton and Lee Nackman)\
+    \ \nIt is a comprehensive and very detailed book that tried to explain and make\
+    \ use of all the features available in C++, in the context of numerical methods.\
+    \ It introduced at the time several new techniques, such as the Curiously Recurring\
+    \ Template Pattern (CRTP, also called Barton-Nackman trick).\nIt pioneered several\
+    \ techniques such as dimensional analysis and automatic differentiation. \nIt\
+    \ came with a lot of compilable and useful code, ranging from an expression parser\
+    \ to a Lapack wrapper. \nThe code is still available here: \nhttp://www.informit.com/store/scientific-and-engineering-c-plus-plus-an-introduction-9780201533934\n\
+    .\nUnfortunately, the books have become somewhat outdated in the style and C++\
+    \ features, however, it was an incredible tour-de-force at the time (1994, pre-STL).\n\
+    The chapters on dynamics inheritance are a bit complicated to understand and not\
+    \ very useful.\nAn updated version of this classic book that includes move semantics\
+    \ and the lessons learned from the STL would be very nice.\n\n\n\n    "
+- - What are the differences between a pointer variable and a reference variable in
+    C++?
+  - "\n\n\n\nA pointer can be re-assigned: \n\n\n\nint x = 5;\nint y = 6;\nint *p;\n\
+    p =  &x;\np = &y;\n*p = 10;\nassert(x == 5);\nassert(y == 10);\n\n\n\n\nA reference\
+    \ cannot, and must be assigned at initialization:\n\n\n\nint x = 5;\nint y = 6;\n\
+    int &r = x;\n\n\n\nA pointer has its own memory address and size on the stack\
+    \ (4 bytes on x86), whereas a reference shares the same memory address (with the\
+    \ original variable) but also takes up some space on the stack.  Since a reference\
+    \ has the same address as the original variable itself, it is safe to think of\
+    \ a reference as another name for the same variable.  Note: What a pointer points\
+    \ to can be on the stack or heap.  Ditto a reference. My claim in this statement\
+    \ is not that a pointer must point to the stack.  A pointer is just a variable\
+    \ that holds a memory address.  This variable is on the stack.  Since a reference\
+    \ has its own space on the stack, and since the address is the same as the variable\
+    \ it references.  More on \nstack vs heap\n.  This implies that there is a real\
+    \ address of a reference that the compiler will not tell you. \n\n\n\nint x =\
+    \ 0;\nint &r = x;\nint *p = &x;\nint *p2 = &r;\nassert(p == p2);\n\n\n\nYou can\
+    \ have pointers to pointers to pointers offering extra levels of indirection.\
+    \  Whereas references only offer one level of indirection. \n\n\n\nint x = 0;\n\
+    int y = 0;\nint *p = &x;\nint *q = &y;\nint **pp = &p;\npp = &q;//*pp = q\n**pp\
+    \ = 4;\nassert(y == 4);\nassert(x == 0);\n\n\n\nPointer can be assigned \nnullptr\n\
+    \ directly, whereas reference cannot. If you try hard enough, and you know how,\
+    \ you can make the address of a reference \nnullptr\n.  Likewise, if you try hard\
+    \ enough you can have a reference to a pointer, and then that reference can contain\
+    \ \nnullptr\n.\n\n\n\nint *p = nullptr;\nint &r = nullptr; <--- compiling error\n\
+    int &r = *p;  <--- likely no compiling error, especially if the nullptr is hidden\
+    \ behind a function call, yet it refers to a non-existent int at address 0\n\n\
+    \n\nPointers can iterate over an array, you can use \n++\n to go to the next item\
+    \ that a pointer is pointing to, and \n+ 4\n to go to the 5th element.  This is\
+    \ no matter what size the object is that the pointer points to.\n\n\nA pointer\
+    \ needs to be dereferenced with \n*\n to access the memory location it points\
+    \ to, whereas a reference can be used directly.  A pointer to a class/struct uses\
+    \ \n->\n to access it's members whereas a reference uses a \n.\n.\n\n\nA pointer\
+    \ is a variable that holds a memory address.  Regardless of how a reference is\
+    \ implemented, a reference has the same memory address as the item it references.\n\
+    \n\nReferences cannot be stuffed into an array, whereas pointers can be (Mentioned\
+    \ by user @litb)\n\n\nConst references can be bound to temporaries. Pointers cannot\
+    \ (not without some indirection):\n\n\n\nconst int &x = int(12); //legal C++\n\
+    int *y = &int(12); //illegal to dereference a temporary.\n\n\n\n\nThis makes \n\
+    const&\n safer for use in argument lists and so forth.\n\n\n\n    "
+- - What are the differences between a pointer variable and a reference variable in
+    C++?
+  - "\n\nWhat's a C++ reference (\nfor C programmers\n)\n\n\n\nA \nreference\n can\
+    \ be thought of as a \nconstant pointer\n (not to be confused with a pointer to\
+    \ a constant value!) with automatic indirection, ie the compiler will apply the\
+    \ \n*\n operator for you.\n\n\n\nAll references must be initialized with a non-null\
+    \ value or compilation will fail. It's neither possible to get the address of\
+    \ a reference - the address operator will return the address of the referenced\
+    \ value instead - nor is it possible to do arithmetics on references.\n\n\n\n\
+    C programmers might dislike C++ references as it will no longer be obvious when\
+    \ indirection happens or if an argument gets passed by value or by pointer without\
+    \ looking at function signatures.\n\n\n\nC++ programmers might dislike using pointers\
+    \ as they are considered unsafe - although references aren't really any safer\
+    \ than constant pointers except in the most trivial cases - lack the convenience\
+    \ of automatic indirection and carry a different semantic connotation.\n\n\n\n\
+    Consider the following statement from the \nC++ FAQ\n:\n\n\n\n\n  \nEven though\
+    \ a reference is often implemented using an address in the\n  underlying assembly\
+    \ language, please do \nnot\n think of a reference as a\n  funny looking pointer\
+    \ to an object. A reference \nis\n the object. It is\n  not a pointer to the object,\
+    \ nor a copy of the object. It \nis\n the\n  object.\n\n\n\n\n\nBut if a reference\
+    \ \nreally\n were the object, how could there be dangling references? In unmanaged\
+    \ languages, it's impossible for references to be any 'safer' than pointers -\
+    \ there generally just isn't a way to reliably alias values across scope boundaries!\n\
+    \n\n\nWhy I consider C++ references useful\n\n\n\nComing from a C background,\
+    \ C++ references may look like a somewhat silly concept, but one should still\
+    \ use them instead of pointers where possible: Automatic indirection \nis\n convenient,\
+    \ and references become especially useful when dealing with \nRAII\n - but not\
+    \ because of any perceived safety advantage, but rather because they make writing\
+    \ idiomatic code less awkward.\n\n\n\nRAII is one of the central concepts of C++,\
+    \ but it interacts non-trivially with copying semantics. Passing objects by reference\
+    \ avoids these issues as no copying is involved. If references were not present\
+    \ in the language, you'd have to use pointers instead, which are more cumbersome\
+    \ to use, thus violating the language design principle that the best-practice\
+    \ solution should be easier than the alternatives.\n\n    "
+- - What are the differences between a pointer variable and a reference variable in
+    C++?
+  - "\n\nIf you want to be really pedantic, there is one thing you can do with a reference\
+    \ that you can't do with a pointer: extend the lifetime of a temporary object.\
+    \ In C++ if you bind a const reference to a temporary object, the lifetime of\
+    \ that object becomes the lifetime of the reference.\n\n\n\nstd::string s1 = \"\
+    123\";\nstd::string s2 = \"456\";\n\nstd::string s3_copy = s1 + s2;\nconst std::string&\
+    \ s3_reference = s1 + s2;\n\n\n\n\nIn this example s3_copy copies the temporary\
+    \ object that is a result of the concatenation. Whereas s3_reference in essence\
+    \ becomes the temporary object. It's really a reference to a temporary object\
+    \ that now has the same lifetime as the reference. \n\n\n\nIf you try this without\
+    \ the \nconst\n it should fail to compile. You cannot bind a non-const reference\
+    \ to a temporary object, nor can you take its address for that matter.\n\n    "
+- - How do I iterate over the words of a string?
+  - "\n\nFor what it's worth, here's another way to extract tokens from an input string,\
+    \ relying only on standard library facilities. It's an example of the power and\
+    \ elegance behind the design of the STL.\n\n\n\n#include <iostream>\n#include\
+    \ <string>\n#include <sstream>\n#include <algorithm>\n#include <iterator>\n\n\
+    int main() {\n    using namespace std;\n    string sentence = \"And I feel fine...\"\
+    ;\n    istringstream iss(sentence);\n    copy(istream_iterator<string>(iss),\n\
+    \         istream_iterator<string>(),\n         ostream_iterator<string>(cout,\
+    \ \"\\n\"));\n}\n\n\n\n\nInstead of copying the extracted tokens to an output\
+    \ stream, one could insert them into a container, using the same generic \ncopy\n\
+    \ algorithm.\n\n\n\nvector<string> tokens;\ncopy(istream_iterator<string>(iss),\n\
+    \     istream_iterator<string>(),\n     back_inserter(tokens));\n\n\n\n\n... or\
+    \ create the \nvector\n directly:\n\n\n\nvector<string> tokens{istream_iterator<string>{iss},\n\
+    \                      istream_iterator<string>{}};\n\n\n    "
+- - How do I iterate over the words of a string?
+  - "\n\nI use this to split string by a delimiter. The first puts the results in\
+    \ a pre-constructed vector, the second returns a new vector.\n\n\n\n\n\n#include\
+    \ <string>\n#include <sstream>\n#include <vector>\n#include <iterator>\n\ntemplate<typename\
+    \ Out>\nvoid split(const std::string &s, char delim, Out result) {\n    std::stringstream\
+    \ ss(s);\n    std::string item;\n    while (std::getline(ss, item, delim)) {\n\
+    \        *(result++) = item;\n    }\n}\n\nstd::vector<std::string> split(const\
+    \ std::string &s, char delim) {\n    std::vector<std::string> elems;\n    split(s,\
+    \ delim, std::back_inserter(elems));\n    return elems;\n}\n\n\n\n\n\n\n\nNote\
+    \ that this solution does not skip empty tokens, so the following will find 4\
+    \ items, one of which is empty:\n\n\n\nstd::vector<std::string> x = split(\"one:two::three\"\
+    , ':');\n\n\n    "
+- - How do I iterate over the words of a string?
+  - "\n\nA possible solution using Boost might be:\n\n\n\n#include <boost/algorithm/string.hpp>\n\
+    std::vector<std::string> strs;\nboost::split(strs, \"string to split\", boost::is_any_of(\"\
+    \\t \"));\n\n\n\n\nThis approach might be even faster than the \nstringstream\n\
+    \ approach. And since this is a generic template function it can be used to split\
+    \ other types of strings (wchar, etc. or UTF-8) using all kinds of delimiters.\n\
+    \n\n\nSee the \ndocumentation\n for details.\n\n    "
+- - What does the explicit keyword mean?
+  - "\n\nThe compiler is allowed to make one implicit conversion to resolve the parameters\
+    \ to a function. What this means is that the compiler can use constructors callable\
+    \ with a \nsingle parameter\n to convert from one type to another in order to\
+    \ get the right type for a parameter. \n\n\n\nHere's an example class with a constructor\
+    \ that can be used for implicit conversions:\n\n\n\nclass Foo\n{\npublic:\n  //\
+    \ single parameter constructor, can be used as an implicit conversion\n  Foo (int\
+    \ foo) : m_foo (foo) \n  {\n  }\n\n  int GetFoo () { return m_foo; }\n\nprivate:\n\
+    \  int m_foo;\n};\n\n\n\n\nHere's a simple function that takes a \nFoo\n object:\n\
+    \n\n\nvoid DoBar (Foo foo)\n{\n  int i = foo.GetFoo ();\n}\n\n\n\n\nand here's\
+    \ where the \nDoBar\n function is called.\n\n\n\nint main ()\n{\n  DoBar (42);\n\
+    }\n\n\n\n\nThe argument is not a \nFoo\n object, but an \nint\n. However, there\
+    \ exists a constructor for \nFoo\n that takes an \nint\n so this constructor can\
+    \ be used to convert the parameter to the correct type.\n\n\n\nThe compiler is\
+    \ allowed to do this once for each parameter.\n\n\n\nPrefixing the \nexplicit\n\
+    \ keyword to the constructor prevents the compiler from using that constructor\
+    \ for implicit conversions. Adding it to the above class will create a compiler\
+    \ error at the function call \nDoBar (42)\n.  It is now necessary to call for\
+    \ conversion explicitly with  \nDoBar (Foo (42))\n\n\n\nThe reason you might want\
+    \ to do this is to avoid accidental construction that can hide bugs.  Contrived\
+    \ example:\n\n\n\n\n\nYou have a \nMyString(int size)\n class with a constructor\
+    \ that constructs a string of the given size.  You have a function \nprint(const\
+    \ MyString&)\n, and you call \nprint(3)\n (when you \nactually\n intended to call\
+    \ \nprint(\"3\")\n).  You expect it to print \"3\", but it prints an empty string\
+    \ of length 3 instead.\n\n\n\n    "
+- - What does the explicit keyword mean?
+  - "\n\nSuppose, you have a class \nString\n:\n\n\n\nclass String {\npublic:\n  \
+    \  String(int n); // allocate n bytes to the String object\n    String(const char\
+    \ *p); // initializes object with char *p\n};\n\n\n\n\nNow, if you try:\n\n\n\n\
+    String mystring = 'x';\n\n\n\n\nThe character \n'x'\n will be implicitly converted\
+    \ to \nint\n and then the \nString(int)\n constructor will be called. But, this\
+    \ is not what the user might have intended. So, to prevent such conditions, we\
+    \ shall define the constructor as \nexplicit\n:\n\n\n\nclass String {\npublic:\n\
+    \    explicit String (int n); //allocate n bytes\n    String(const char *p); //\
+    \ initialize sobject with string p\n};\n\n\n    "
+- - What does the explicit keyword mean?
+  - "\n\nIn C++, a constructor with only one required parameter is considered an implicit\
+    \ conversion function.  It converts the parameter type to the class type.  Whether\
+    \ this is a good thing or not depends on the semantics of the constructor.\n\n\
+    \n\nFor example, if you have a string class with constructor \nString(const char*\
+    \ s)\n, that's probably exactly what you want.  You can pass a \nconst char*\n\
+    \ to a function expecting a \nString\n, and the compiler will automatically construct\
+    \ a temporary \nString\n object for you.\n\n\n\nOn the other hand, if you have\
+    \ a buffer class whose constructor \nBuffer(int size)\n takes the size of the\
+    \ buffer in bytes, you probably don't want the compiler to quietly turn \nint\n\
+    s into \nBuffer\ns.  To prevent that, you declare the constructor with the \n\
+    explicit\n keyword:\n\n\n\nclass Buffer { explicit Buffer(int size); ... }\n\n\
+    \n\n\nThat way,\n\n\n\nvoid useBuffer(Buffer& buf);\nuseBuffer(4);\n\n\n\n\nbecomes\
+    \ a compile-time error.  If you want to pass a temporary \nBuffer\n object, you\
+    \ have to do so explicitly:\n\n\n\nuseBuffer(Buffer(4));\n\n\n\n\nIn summary,\
+    \ if your single-parameter constructor converts the parameter into an object of\
+    \ your class, you probably don't want to use the \nexplicit\n keyword.  But if\
+    \ you have a constructor that simply happens to take a single parameter, you should\
+    \ declare it as \nexplicit\n to prevent the compiler from surprising you with\
+    \ unexpected conversions.\n\n    "
+- - Why is “using namespace std” considered bad practice?
+  - "\n\nThis is not related to performance at all. But consider this: you are using\
+    \ two libraries called Foo and Bar:\n\n\n\nusing namespace foo;\nusing namespace\
+    \ bar;\n\n\n\n\nEverything works fine, you can call \nBlah()\n from Foo and \n\
+    Quux()\n from Bar without problems. But one day you upgrade to a new version of\
+    \ Foo 2.0, which now offers a function called \nQuux()\n. Now you've got a conflict:\
+    \ Both Foo 2.0 and Bar import \nQuux()\n into your global namespace. This is going\
+    \ to take some effort to fix, especially if the function parameters happen to\
+    \ match.\n\n\n\nIf you had used \nfoo::Blah()\n and \nbar::Quux()\n, then the\
+    \ introduction of \nfoo::Quux()\n would have been a non-event.\n\n    "
+- - Why is “using namespace std” considered bad practice?
+  - "\n\nI agree with everything \nGreg wrote\n, but I'd like to add: \nIt can even\
+    \ get worse than Greg said!\n\n\n\nLibrary Foo 2.0 could introduce a function,\
+    \ \nQuux()\n, that is an unambiguously better match for some of your calls to\
+    \ \nQuux()\n than the \nbar::Quux()\n your code called for years. Then your \n\
+    code still compiles\n, but \nit silently calls the wrong function\n and does god-knows-what.\
+    \ That's about as bad as things can get.\n\n\n\nKeep in mind that the \nstd\n\
+    \ namespace has tons of identifiers, many of which are \nvery\n common ones (think\
+    \ \nlist\n, \nsort\n, \nstring\n, \niterator\n, etc.) which are very likely to\
+    \ appear in other code, too.\n\n\n\nIf you consider this unlikely: There was \n\
+    a question asked\n here on Stack Overflow where pretty much exactly this happened\
+    \ (wrong function called due to omitted \nstd::\n prefix) about half a year after\
+    \ I gave this answer. \nHere\n is another, more recent example of such a question.\n\
+    So this is a real problem.\n\n\n\n\n\n\nHere's one more data point: Many, many\
+    \ years ago, I also used to find it annoying having to prefix everything from\
+    \ the standard library with \nstd::\n. Then I worked in a project where it was\
+    \ decided at the start that both \nusing\n directives and declarations are banned\
+    \ except for function scopes. Guess what? It took most of us very few weeks to\
+    \ get used to writing the prefix, and after a few more weeks most of us even agreed\
+    \ that it actually made the code \nmore readable\n. There's a reason for that:\
+    \ \nWhether you like shorter or longer prose is subjective, but the prefixes objectively\
+    \ add clarity to the code.\n Not only the compiler, but you, too, find it easier\
+    \ to see which identifier is referred to.\n\n\n\nIn a decade, that project grew\
+    \ to have several million lines of code. Since these discussions come up again\
+    \ and again, I once was curious how often the (allowed) function-scope \nusing\n\
+    \ actually was used in the project. I grep'd the sources for it and only found\
+    \ one or two dozen places where it was used. To me this indicates that, once tried,\
+    \ developers don't find \nstd::\n painful enough to employ using directives even\
+    \ once every 100 kLoC even where it was allowed to be used.\n\n\n\n\n\n\nBottom\
+    \ line: Explicitly prefixing everything doesn't do any harm, takes very little\
+    \ getting used to, and has objective advantages. In particular, it makes the code\
+    \ easier to interpret by the compiler and by human readers — and that should probably\
+    \ be the main goal when writing code.\n\n    "
+- - Why is “using namespace std” considered bad practice?
+  - "\n\nThe problem with putting \nusing namespace\n in the header files of your\
+    \ classes is that it forces anyone who wants to use your classes (by including\
+    \ your header files) to also be 'using' (i.e. seeing everything in) those other\
+    \ namespaces.\n\n\n\nHowever, you may feel free to put a using statement in your\
+    \ (private) *.cpp files.\n\n\n\n\n\n\nBeware that some people disagree with my\
+    \ saying \"feel free\" like this -- because although a using statement in a cpp\
+    \ file is \nbetter\n than in a header (because it doesn't affect people who include\
+    \ your header file), they think it's still not \ngood\n (because depending on\
+    \ the code it could make the implementation of the class more difficult to maintain).\
+    \ \nThis FAQ topic\n says,\n\n\n\n\n  \nThe using-directive exists for legacy\
+    \ C++ code and to ease the transition to namespaces, but you probably shouldn’t\
+    \ use it on a regular basis, at least not in your new C++ code.\n\n\n\n\n\nThe\
+    \ FAQ suggests two alternatives:\n\n\n\n\n\nA using-declaration:\n\n\n\nusing\
+    \ std::cout; // a using-declaration lets you use cout without qualification\n\
+    cout << \"Values:\";\n\n\n\nJust typing std::\n\n\n\nstd::cout << \"Values:\"\
+    ;\n\n\n\n\n    "
+- - How do you set, clear, and toggle a single bit?
+  - "\n\nSetting a bit\n\n\n\nUse the bitwise OR operator (\n|\n) to set a bit.\n\n\
+    \n\nnumber |= 1UL << n;\n\n\n\n\nThat will set the \nn\nth bit of \nnumber\n.\
+    \ \nn\n should be zero, if you want to set the \n1\nst bit and so on upto \nn-1\n\
+    , if you want to set the \nn\nth bit.\n\n\n\nUse \n1ULL\n if \nnumber\n is wider\
+    \ than \nunsigned long\n; promotion of \n1UL << n\n doesn't happen until after\
+    \ evaluating \n1UL << n\n where it's undefined behaviour to shift by more than\
+    \ the width of a \nlong\n.  The same applies to all the rest of the examples.\n\
+    \n\n\nClearing a bit\n\n\n\nUse the bitwise AND operator (\n&\n) to clear a bit.\n\
+    \n\n\nnumber &= ~(1UL << n);\n\n\n\n\nThat will clear the \nn\nth bit of \nnumber\n\
+    . You must invert the bit string with the bitwise NOT operator (\n~\n), then AND\
+    \ it.\n\n\n\nToggling a bit\n\n\n\nThe XOR operator (\n^\n) can be used to toggle\
+    \ a bit.\n\n\n\nnumber ^= 1UL << n;\n\n\n\n\nThat will toggle the \nn\nth bit\
+    \ of \nnumber\n.\n\n\n\nChecking a bit\n\n\n\nYou didn't ask for this, but I might\
+    \ as well add it.\n\n\n\nTo check a bit, shift the number n to the right, then\
+    \ bitwise AND it:\n\n\n\nbit = (number >> n) & 1U;\n\n\n\n\nThat will put the\
+    \ value of the \nn\nth bit of \nnumber\n into the variable \nbit\n.\n\n\n\nChanging\
+    \ the \nn\nth bit to \nx\n\n\n\nSetting the \nn\nth bit to either \n1\n or \n\
+    0\n can be achieved with the following on a 2's complement C++ implementation:\n\
+    \n\n\nnumber ^= (-x ^ number) & (1UL << n);\n\n\n\n\nBit \nn\n will be set if\
+    \ \nx\n is \n1\n, and cleared if \nx\n is \n0\n.  If \nx\n has some other value,\
+    \ you get garbage.  \nx = !!x\n will booleanize it to 0 or 1.\n\n\n\nTo make this\
+    \ independent of 2's complement negation behaviour (where \n-1\n has all bits\
+    \ set, unlike on a 1's complement or sign/magnitude C++ implementation), use unsigned\
+    \ negation.\n\n\n\nnumber ^= (-(unsigned long)x ^ number) & (1UL << n);\n\n\n\n\
+    \nor\n\n\n\nunsigned long newbit = !!x;    // Also booleanize to force 0 or 1\n\
+    number ^= (-newbit ^ number) & (1UL << n);\n\n\n\n\nIt's generally a good idea\
+    \ to use unsigned types for portable bit manipulation.\n\n\n\nIt's also generally\
+    \ a good idea to not to copy/paste code in general and so many people use preprocessor\
+    \ macros (like \nthe community wiki answer further down\n) or some sort of encapsulation.\n\
+    \n    "
+- - How do you set, clear, and toggle a single bit?
+  - "\n\nUsing the Standard C++ Library: \nstd::bitset<N>\n.\n\n\n\nOr the \nBoost\n\
+    \ version: \nboost::dynamic_bitset\n.\n\n\n\nThere is no need to roll your own:\n\
+    \n\n\n#include <bitset>\n#include <iostream>\n\nint main()\n{\n    std::bitset<5>\
+    \ x;\n\n    x[1] = 1;\n    x[2] = 0;\n    // Note x[0-4]  valid\n\n    std::cout\
+    \ << x << std::endl;\n}\n\n\n\n\n\n\n\n[Alpha:] > ./a.out\n00010\n\n\n\n\nThe\
+    \ Boost version allows a runtime sized bitset compared with a \nstandard library\n\
+    \ compile-time sized bitset.\n\n    "
+- - How do you set, clear, and toggle a single bit?
+  - "\n\nThe other option is to use bit fields:\n\n\n\nstruct bits {\n    unsigned\
+    \ int a:1;\n    unsigned int b:1;\n    unsigned int c:1;\n};\n\nstruct bits mybits;\n\
+    \n\n\n\ndefines a 3-bit field (actually, it's three 1-bit felds). Bit operations\
+    \ now become a bit (haha) simpler:\n\n\n\nTo set or clear a bit:\n\n\n\nmybits.b\
+    \ = 1;\nmybits.c = 0;\n\n\n\n\nTo toggle a bit:\n\n\n\nmybits.a = !mybits.a;\n\
+    mybits.b = ~mybits.b;\nmybits.c ^= 1;  /* all work */\n\n\n\n\nChecking a bit:\n\
+    \n\n\nif (mybits.c)  //if mybits.c is non zero the next line below will execute\n\
+    \n\n\n\nThis only works with fixed-size bit fields. Otherwise you have to resort\
+    \ to the bit-twiddling techniques described in previous posts.\n\n    "
+- - When should static_cast, dynamic_cast, const_cast and reinterpret_cast be used?
+  - "\n\nstatic_cast\n is the first cast you should attempt to use. It does things\
+    \ like implicit conversions between types (such as \nint\n to \nfloat\n, or pointer\
+    \ to \nvoid*\n), and it can also call explicit conversion functions (or implicit\
+    \ ones). In many cases, explicitly stating \nstatic_cast\n isn't necessary, but\
+    \ it's important to note that the \nT(something)\n syntax is equivalent to \n\
+    (T)something\n and should be avoided (more on that later). A \nT(something, something_else)\n\
+    \ is safe, however, and guaranteed to call the constructor.\n\n\n\nstatic_cast\n\
+    \ can also cast through inheritance hierarchies. It is unnecessary when casting\
+    \ upwards (towards a base class), but when casting downwards it can be used as\
+    \ long as it doesn't cast through \nvirtual\n inheritance. It does not do checking,\
+    \ however, and it is undefined behavior to \nstatic_cast\n down a hierarchy to\
+    \ a type that isn't actually the type of the object.\n\n\n\n\n\n\nconst_cast\n\
+    \ can be used to remove or add \nconst\n to a variable; no other C++ cast is capable\
+    \ of removing it (not even \nreinterpret_cast\n). It is important to note that\
+    \ modifying a formerly \nconst\n value is only undefined if the original variable\
+    \ is \nconst\n; if you use it to take the \nconst\n off a reference to something\
+    \ that wasn't declared with \nconst\n, it is safe. This can be useful when overloading\
+    \ member functions based on \nconst\n, for instance. It can also be used to add\
+    \ \nconst\n to an object, such as to call a member function overload.\n\n\n\n\
+    const_cast\n also works similarly on \nvolatile\n, though that's less common.\n\
+    \n\n\n\n\n\ndynamic_cast\n is almost exclusively used for handling polymorphism.\
+    \ You can cast a pointer or reference to any polymorphic type to any other class\
+    \ type (a polymorphic type has at least one virtual function, declared or inherited).\
+    \ You can use it for more than just casting downwards -- you can cast sideways\
+    \ or even up another chain. The \ndynamic_cast\n will seek out the desired object\
+    \ and return it if possible. If it can't, it will return \nnullptr\n in the case\
+    \ of a pointer, or throw \nstd::bad_cast\n in the case of a reference.\n\n\n\n\
+    dynamic_cast\n has some limitations, though. It doesn't work if there are multiple\
+    \ objects of the same type in the inheritance hierarchy (the so-called 'dreaded\
+    \ diamond') and you aren't using \nvirtual\n inheritance. It also can only go\
+    \ through public inheritance - it will always fail to travel through \nprotected\n\
+    \ or \nprivate\n inheritance. This is rarely an issue, however, as such forms\
+    \ of inheritance are rare.\n\n\n\n\n\n\nreinterpret_cast\n is the most dangerous\
+    \ cast, and should be used very sparingly. It turns one type directly into another\
+    \ - such as casting the value from one pointer to another, or storing a pointer\
+    \ in an \nint\n, or all sorts of other nasty things. Largely, the only guarantee\
+    \ you get with \nreinterpret_cast\n is that normally if you cast the result back\
+    \ to the original type, you will get the exact same value (but \nnot\n if the\
+    \ intermediate type is smaller than the original type). There are a number of\
+    \ conversions that \nreinterpret_cast\n cannot do, too. It's used primarily for\
+    \ particularly weird conversions and bit manipulations, like turning a raw data\
+    \ stream into actual data, or storing data in the low bits of an aligned pointer.\n\
+    \n\n\n\n\n\nC-style cast\n and \nfunction-style cast\n are casts using \n(type)object\n\
+    \ or \ntype(object)\n, respectively. A C-style cast is defined as the first of\
+    \ the following which succeeds:\n\n\n\n\n\nconst_cast\n\n\nstatic_cast\n (though\
+    \ ignoring access restrictions)\n\n\nstatic_cast\n (see above), then \nconst_cast\n\
+    \n\nreinterpret_cast\n\n\nreinterpret_cast\n, then \nconst_cast\n\n\n\n\n\nIt\
+    \ can therefore be used as a replacement for other casts in some instances, but\
+    \ can be extremely dangerous because of the ability to devolve into a \nreinterpret_cast\n\
+    , and the latter should be preferred when explicit casting is needed, unless you\
+    \ are sure \nstatic_cast\n will succeed or \nreinterpret_cast\n will fail. Even\
+    \ then, consider the longer, more explicit option.\n\n\n\nC-style casts also ignore\
+    \ access control when performing a \nstatic_cast\n, which means that they have\
+    \ the ability to perform an operation that no other cast can. This is mostly a\
+    \ kludge, though, and in my mind is just another reason to avoid C-style casts.\n\
+    \n    "
+- - When should static_cast, dynamic_cast, const_cast and reinterpret_cast be used?
+  - "\n\nUse \ndynamic_cast\n for converting pointers/references within an inheritance\
+    \ hierarchy.\n\n\n\nUse \nstatic_cast\n for ordinary type conversions.\n\n\n\n\
+    Use \nreinterpret_cast\n for low-level reinterpreting of bit patterns.  Use with\
+    \ extreme caution.\n\n\n\nUse \nconst_cast\n for casting away \nconst/volatile\n\
+    .  Avoid this unless you are stuck using a const-incorrect API.\n\n    "
+- - When should static_cast, dynamic_cast, const_cast and reinterpret_cast be used?
+  - "\n\n(A lot of theoretical and conceptual explanation has been given above)\n\
+    \ \n\n\n\nBelow are some of the \npractical examples\n when I used \nstatic_cast\n\
+    , \ndynamic_cast\n, \nconst_cast\n, \nreinterpret_cast\n.\n\n\n\n(Also referes\
+    \ this to understand the explaination : \nhttp://www.cplusplus.com/doc/tutorial/typecasting/\n\
+    )\n\n\n\nstatic_cast :\n\n\n\nOnEventData(void* pData)\n\n{\n  ......\n\n  //\
+    \  pData is a void* pData, \n\n  //  EventData is a structure e.g. \n  //  typedef\
+    \ struct _EventData {\n  //  std::string id;\n  //  std:: string remote_id;\n\
+    \  //  } EventData;\n\n  // On Some Situation a void pointer *pData\n  // has\
+    \ been static_casted as \n  // EventData* pointer \n\n  EventData *evtdata = static_cast<EventData*>(pData);\n\
+    \  .....\n}\n\n\n\n\ndynamic_cast :\n\n\n\nvoid DebugLog::OnMessage(Message *msg)\n\
+    {\n    static DebugMsgData *debug;\n    static XYZMsgData *xyz;\n\n    if(debug\
+    \ = dynamic_cast<DebugMsgData*>(msg->pdata)){\n        // debug message\n    }\n\
+    \    else if(xyz = dynamic_cast<XYZMsgData*>(msg->pdata)){\n        // xyz message\n\
+    \    }\n    else/* if( ... )*/{\n        // ...\n    }\n}\n\n\n\n\nconst_cast\
+    \ :\n\n\n\n// *Passwd declared as a const\n\nconst unsigned char *Passwd\n\n\n\
+    // on some situation it require to remove its constness\n\nconst_cast<unsigned\
+    \ char*>(Passwd)\n\n\n\n\nreinterpret_cast :\n\n\n\ntypedef unsigned short uint16;\n\
+    \n// Read Bytes returns that 2 bytes got read. \n\nbool ByteBuffer::ReadUInt16(uint16&\
+    \ val) {\n  return ReadBytes(reinterpret_cast<char*>(&val), 2);\n}\n\n\n    "
+- - Why are elementwise additions much faster in separate loops than in a combined
+    loop?
+  - "\n\nUpon further analysis of this, I believe this is (at least partially) caused\
+    \ by data alignment of the four pointers. This will cause some level of cache\
+    \ bank/way conflicts.\n\n\n\nIf I've guessed correctly on how you are allocating\
+    \ your arrays, they \nare likely to be aligned to the page line\n.\n\n\n\nThis\
+    \ means that all your accesses in each loop will fall on the same cache way. However,\
+    \ Intel processors have had 8-way L1 cache associativity for a while. But in reality,\
+    \ the performance isn't completely uniform. Accessing 4-ways is still slower than\
+    \ say 2-ways.\n\n\n\nEDIT : It does in fact look like you are allocating all the\
+    \ arrays separately.\n\nUsually when such large allocations are requested, the\
+    \ allocator will request fresh pages from the OS. Therefore, there is a high chance\
+    \ that large allocations will appear at the same offset from a page-boundary.\n\
+    \n\n\nHere's the test code:\n\n\n\nint main(){\n    const int n = 100000;\n\n\
+    #ifdef ALLOCATE_SEPERATE\n    double *a1 = (double*)malloc(n * sizeof(double));\n\
+    \    double *b1 = (double*)malloc(n * sizeof(double));\n    double *c1 = (double*)malloc(n\
+    \ * sizeof(double));\n    double *d1 = (double*)malloc(n * sizeof(double));\n\
+    #else\n    double *a1 = (double*)malloc(n * sizeof(double) * 4);\n    double *b1\
+    \ = a1 + n;\n    double *c1 = b1 + n;\n    double *d1 = c1 + n;\n#endif\n\n  \
+    \  //  Zero the data to prevent any chance of denormals.\n    memset(a1,0,n *\
+    \ sizeof(double));\n    memset(b1,0,n * sizeof(double));\n    memset(c1,0,n *\
+    \ sizeof(double));\n    memset(d1,0,n * sizeof(double));\n\n    //  Print the\
+    \ addresses\n    cout << a1 << endl;\n    cout << b1 << endl;\n    cout << c1\
+    \ << endl;\n    cout << d1 << endl;\n\n    clock_t start = clock();\n\n    int\
+    \ c = 0;\n    while (c++ < 10000){\n\n#if ONE_LOOP\n        for(int j=0;j<n;j++){\n\
+    \            a1[j] += b1[j];\n            c1[j] += d1[j];\n        }\n#else\n\
+    \        for(int j=0;j<n;j++){\n            a1[j] += b1[j];\n        }\n     \
+    \   for(int j=0;j<n;j++){\n            c1[j] += d1[j];\n        }\n#endif\n\n\
+    \    }\n\n    clock_t end = clock();\n    cout << \"seconds = \" << (double)(end\
+    \ - start) / CLOCKS_PER_SEC << endl;\n\n    system(\"pause\");\n    return 0;\n\
+    }\n\n\n\n\n\n\n\nBenchmark Results:\n\n\n\nEDIT: Results on an \nactual\n Core\
+    \ 2 architecture machine:\n\n\n\n2 x Intel Xeon X5482 Harpertown @ 3.2 GHz:\n\n\
+    \n\n#define ALLOCATE_SEPERATE\n#define ONE_LOOP\n00600020\n006D0020\n007A0020\n\
+    00870020\nseconds = 6.206\n\n#define ALLOCATE_SEPERATE\n//#define ONE_LOOP\n005E0020\n\
+    006B0020\n00780020\n00850020\nseconds = 2.116\n\n//#define ALLOCATE_SEPERATE\n\
+    #define ONE_LOOP\n00570020\n00633520\n006F6A20\n007B9F20\nseconds = 1.894\n\n\
+    //#define ALLOCATE_SEPERATE\n//#define ONE_LOOP\n008C0020\n00983520\n00A46A20\n\
+    00B09F20\nseconds = 1.993\n\n\n\n\nObservations:\n\n\n\n\n\n6.206 seconds\n with\
+    \ one loop and \n2.116 seconds\n with two loops. This reproduces the OP's results\
+    \ exactly.\n\n\nIn the first two tests, the arrays are allocated separately.\n\
+    \ You'll notice that they all have the same alignment relative to the page.\n\n\
+    \nIn the second two tests, the arrays are packed together to break that alignment.\n\
+    \ Here you'll notice both loops are faster. Furthermore, the second (double) loop\
+    \ is now the slower one as you would normally expect.\n\n\n\n\n\nAs @Stephen Cannon\
+    \ points out in the comments, there is very likely possibility that this alignment\
+    \ causes \nfalse aliasing\n in the load/store units or the cache. I Googled around\
+    \ for this and found that Intel actually has a hardware counter for \npartial\
+    \ address aliasing\n stalls:\n\n\n\nhttp://software.intel.com/sites/products/documentation/doclib/stdxe/2013/~amplifierxe/pmw_dp/events/partial_address_alias.html\n\
+    \n\n\n\n\n\n5 Regions - Explanations\n\n\n\nRegion 1:\n\n\n\nThis one is easy.\
+    \ The dataset is so small that the performance is dominated by overhead like looping\
+    \ and branching.\n\n\n\nRegion 2:\n\n\n\nHere, as the data sizes increases, the\
+    \ amount of relative overhead goes down and the performance \"saturates\". Here\
+    \ two loops is slower because it has twice as much loop and branching overhead.\n\
+    \n\n\nI'm not sure exactly what's going on here... Alignment could still play\
+    \ an effect as Agner Fog mentions \ncache bank conflicts\n. (That link is about\
+    \ Sandy Bridge, but the idea should still be applicable to Core 2.)\n\n\n\nRegion\
+    \ 3:\n\n\n\nAt this point, the data no longer fits in L1 cache. So performance\
+    \ is capped by the L1 <-> L2 cache bandwidth.\n\n\n\nRegion 4:\n\n\n\nThe performance\
+    \ drop in the single-loop is what we are observing. And as mentioned, this is\
+    \ due to the alignment which (most likely) causes \nfalse aliasing\n stalls in\
+    \ the processor load/store units.\n\n\n\nHowever, in order for false aliasing\
+    \ to occur, there must be a large enough stride between the datasets. This is\
+    \ why you don't see this in region 3.\n\n\n\nRegion 5:\n\n\n\nAt this point, nothing\
+    \ fits in cache. So you're bound by memory bandwidth.\n\n\n\n\n\n\n\n\n\n\n\n\
+    \    "
+- - Why are elementwise additions much faster in separate loops than in a combined
+    loop?
+  - "\n\nOK, the right answer definitely has to do something with the CPU cache. But\
+    \ to use the cache argument can be quite difficult, especially without data.\n\
+    \n\n\nThere are many answers, that led to a lot of discussion, but let's face\
+    \ it: Cache issues can be very complex and are not one dimensional. They depend\
+    \ heavily on the size of the data, so my question was unfair: It turned out to\
+    \ be at a very interesting point in the cache graph.\n\n\n\n@Mysticial's answer\
+    \ convinced a lot of people (including me), probably because it was the only one\
+    \ that seemed to rely on facts, but it was only one \"data point\" of the truth.\n\
+    \n\n\nThat's why I combined his test (using a continuous vs. separate allocation)\
+    \ and @James' Answer's advice.\n\n\n\nThe graphs below shows, that most of the\
+    \ answers and especially the majority of comments to the question and answers\
+    \ can be considered completely wrong or true depending on the exact scenario and\
+    \ parameters used.\n\n\n\nNote that my initial question was at \nn = 100.000\n\
+    . This point (by accident) exhibits special behavior: \n\n\n\n\n\nIt possesses\
+    \ the greatest discrepancy between the one and two loop'ed version (almost a factor\
+    \ of three)\n\n\nIt is the only point, where one-loop (namely with continuous\
+    \ allocation) beats the two-loop version. (This made Mysticial's answer possible,\
+    \ at all.)\n\n\n\n\n\nThe result using initialized data:\n\n\n\n\n\n\nThe result\
+    \ using uninitialized data (this is what Mysticial tested):\n\n\n\n\n\n\nAnd this\
+    \ is a hard-to-explain one: Initialized data, that is allocated once and reused\
+    \ for every following test case of different vector size:\n\n\n\n\n\n\nProposal\n\
+    \n\n\nEvery low-level performance related question on Stack Overflow should be\
+    \ required to provide MFLOPS information for the whole range of cache relevant\
+    \ data sizes! It's a waste of everybody's time to think of answers and especially\
+    \ discuss them with others without this information.\n\n    "
+- - Why are elementwise additions much faster in separate loops than in a combined
+    loop?
+  - "\n\nThe second loop involves a lot less cache activity, so it's easier for the\
+    \ processor to keep up with the memory demands.\n\n    "
+- - 'What is the difference between #include <filename> and #include “filename”?'
+  - "\n\nIn practice, the difference is in the location where the preprocessor searches\
+    \ for the included file. \n\n\n\nFor \n#include <filename>\n the preprocessor\
+    \ searches in an implementation dependent manner, normally in search directories\
+    \ pre-designated by the compiler/IDE. This method is normally used to include\
+    \ standard library header files.\n\n\n\nFor \n#include \"filename\"\n the preprocessor\
+    \ searches first in the same directory as the file containing the directive, and\
+    \ then follows the search path used for the \n#include <filename>\n form. This\
+    \ method is normally used to include programmer-defined header files.\n\n\n\n\
+    A more complete description is available in the GCC \ndocumentation on search\
+    \ paths\n.\n\n    "
+- - 'What is the difference between #include <filename> and #include “filename”?'
+  - "\n\nThe only way to know is to read your implementation's documentation.\n\n\n\
+    \nIn \nthe C standard\n, section 6.10.2, paragraphs 2 to 4 state:\n\n\n\n\n  \n\
+    \n  \nA preprocessing directive of the form\n\n\n\n#include <h-char-sequence>\
+    \ new-line\n\n\n  \n  \nsearches a sequence of implementation-defined places for\
+    \ a \nheader\n identified uniquely by the specified sequence between the \n<\n\
+    \ and \n>\n delimiters, and causes the replacement of that directive by the entire\
+    \ contents of the \nheader\n. How the places are specified or the header identified\
+    \ is implementation-defined.\n\n  \nA preprocessing directive of the form\n\n\n\
+    \n#include \"q-char-sequence\" new-line\n\n\n  \n  \ncauses the replacement of\
+    \ that directive by the entire contents of the \nsource file\n identified by the\
+    \ specified sequence between the \n\"\n delimiters. The named \nsource file\n\
+    \ is searched for in an implementation-defined manner. If this search is not supported,\
+    \ or if the search fails, the directive is reprocessed as if it read\n\n\n\n#include\
+    \ <h-char-sequence> new-line\n\n\n  \n  \nwith the identical contained sequence\
+    \ (including \n>\n characters, if any) from the original\n  directive.\n\n  \n\
+    A preprocessing directive of the form\n\n\n\n#include pp-tokens new-line\n\n\n\
+    \  \n  \n(that does not match one of the two previous forms) is permitted. The\
+    \ preprocessing tokens after \ninclude\n in the directive are processed just as\
+    \ in normal text. (Each identifier currently defined as a macro name is replaced\
+    \ by its replacement list of preprocessing tokens.) The directive resulting after\
+    \ all replacements shall match one of the two previous forms. The method by which\
+    \ a sequence of preprocessing tokens between a \n<\n and a \n>\n preprocessing\
+    \ token pair or a pair of \n\"\n characters is combined into a single header name\
+    \ preprocessing token is implementation-defined.\n\n  \n\n  \n  \nDefinitions:\n\
+    \n  \n  \n\n  \nh-char: any member of the source character set except the new-line\
+    \ character and \n>\n\n  \nq-char: any member of the source character set except\
+    \ the new-line character and \n\"\n\n  \n\n\n\n    "
+- - 'What is the difference between #include <filename> and #include “filename”?'
+  - "\n\nThe sequence of characters between < and > uniquely refer to a header, which\
+    \ isn't necessarily a file. Implementations are pretty much free to use the character\
+    \ sequence as they wish. (Mostly, however, just treat it as a file name and do\
+    \ a search in the \ninclude path\n, as the other posts state.)\n\n\n\nIf the \n\
+    #include \"file\"\n form is used, the implementation first looks for a file of\
+    \ the given name, if supported. If not (supported), or if the search fails, the\
+    \ implementation behaves as though the other (\n#include <file>\n) form was used.\n\
+    \n\n\nAlso, a third form exists and is used when the \n#include\n directive doesn't\
+    \ match either of the forms above. In this form, some basic preprocessing (such\
+    \ as macro expansion) is done on the \"operands\" of the \n#include\n directive,\
+    \ and the result is expected to match one of the two other forms.\n\n    "
+- - What are the basic rules and idioms for operator overloading?
+  - "\n\nCommon operators to overload\n\n\n\nMost of the work in overloading operators\
+    \ is boiler-plate code. That is little wonder, since operators are merely syntactic\
+    \ sugar, their actual work could be done by (and often is forwarded to) plain\
+    \ functions. But it is important that you get this boiler-plate code right. If\
+    \ you fail, either your operator’s code won’t compile or your users’ code won’t\
+    \ compile or your users’ code will behave surprisingly.\n\n\n\nAssignment Operator\n\
+    \n\n\nThere's a lot to be said about assignment. However, most of it has already\
+    \ been said in \nGMan's famous Copy-And-Swap FAQ\n, so I'll skip most of it here,\
+    \ only listing the perfect assignment operator for reference:\n\n\n\nX& X::operator=(X\
+    \ rhs)\n{\n  swap(rhs);\n  return *this;\n}\n\n\n\n\nBitshift Operators (used\
+    \ for Stream I/O)\n\n\n\nThe bitshift operators \n<<\n and \n>>\n, although still\
+    \ used in hardware interfacing for the bit-manipulation functions they inherit\
+    \ from C, have become more prevalent as overloaded stream input and output operators\
+    \ in most applications.  For guidance overloading as bit-manipulation operators,\
+    \ see the section below on Binary Arithmetic Operators.  For implementing your\
+    \ own custom format and parsing logic when your object is used with iostreams,\
+    \ continue.\n\n\n\nThe stream operators, among the most commonly overloaded operators,\
+    \ are binary infix operators for which the syntax specifies no restriction on\
+    \ whether they should be members or non-members.\nSince they change their left\
+    \ argument (they alter the stream’s state), they should, according to the rules\
+    \ of thumb, be implemented as members of their left operand’s type. However, their\
+    \ left operands are streams from the standard library, and while most of the stream\
+    \ output and input operators defined by the standard library are indeed defined\
+    \ as members of the stream classes, when you implement output and input operations\
+    \ for your own types, you cannot change the standard library’s stream types. That’s\
+    \ why you need to implement these operators for your own types as non-member functions.\n\
+    The canonical forms of the two are these:\n\n\n\nstd::ostream& operator<<(std::ostream&\
+    \ os, const T& obj)\n{\n  // write obj to stream\n\n  return os;\n}\n\nstd::istream&\
+    \ operator>>(std::istream& is, T& obj)\n{\n  // read obj from stream\n\n  if(\
+    \ /* no valid object of T found in stream */ )\n    is.setstate(std::ios::failbit);\n\
+    \n  return is;\n}\n\n\n\n\nWhen implementing \noperator>>\n, manually setting\
+    \ the stream’s state is only necessary when the reading itself succeeded, but\
+    \ the result is not what would be expected.\n\n\n\nFunction call operator\n\n\n\
+    \nThe function call operator, used to create function objects, also known as functors,\
+    \ must be defined as a \nmember\n function, so it always has the implicit \nthis\n\
+    \ argument of member functions. Other than this it can be overloaded to take any\
+    \ number of additional arguments, including zero.\n\n\n\nHere's an example of\
+    \ the syntax:\n\n\n\nclass foo {\npublic:\n    // Overloaded call operator\n \
+    \   int operator()(const std::string& y) {\n        // ...\n    }\n};\n\n\n\n\n\
+    Usage:\n\n\n\nfoo f;\nint a = f(\"hello\");\n\n\n\n\nThroughout the C++ standard\
+    \ library, function objects are always copied. Your own function objects should\
+    \ therefore be cheap to copy. If a function object absolutely needs to use data\
+    \ which is expensive to copy, it is better to store that data elsewhere and have\
+    \ the function object refer to it.\n\n\n\nComparison operators\n\n\n\nThe binary\
+    \ infix comparison operators should, according to the rules of thumb, be implemented\
+    \ as non-member functions\n1\n. The unary prefix negation \n!\n should (according\
+    \ to the same rules) be implemented as a member function. (but it is usually not\
+    \ a good idea to overload it.)\n\n\n\nThe standard library’s algorithms (e.g.\
+    \ \nstd::sort()\n) and types (e.g. \nstd::map\n) will always only expect \noperator<\n\
+    \ to be present. However, the \nusers of your type will expect all the other operators\
+    \ to be present\n, too, so if you define \noperator<\n, be sure to follow the\
+    \ third fundamental rule of operator overloading and also define all the other\
+    \ boolean comparison operators. The canonical way to implement them is this:\n\
+    \n\n\ninline bool operator==(const X& lhs, const X& rhs){ /* do actual comparison\
+    \ */ }\ninline bool operator!=(const X& lhs, const X& rhs){return !operator==(lhs,rhs);}\n\
+    inline bool operator< (const X& lhs, const X& rhs){ /* do actual comparison */\
+    \ }\ninline bool operator> (const X& lhs, const X& rhs){return  operator< (rhs,lhs);}\n\
+    inline bool operator<=(const X& lhs, const X& rhs){return !operator> (lhs,rhs);}\n\
+    inline bool operator>=(const X& lhs, const X& rhs){return !operator< (lhs,rhs);}\n\
+    \n\n\n\nThe important thing to note here is that only two of these operators actually\
+    \ do anything, the others are just forwarding their arguments to either of these\
+    \ two to do the actual work.\n\n\n\nThe syntax for overloading the remaining binary\
+    \ boolean operators (\n||\n, \n&&\n) follows the rules of the comparison operators.\
+    \ However, it is \nvery\n unlikely that you would find a reasonable use case for\
+    \ these\n2\n.\n\n\n\n1\n \nAs with all rules of thumb, sometimes there might be\
+    \ reasons to break this one, too. If so, do not forget that the left-hand operand\
+    \ of the binary comparison operators, which for member functions will be \n*this\n\
+    , needs to be \nconst\n, too. So a comparison operator implemented as a member\
+    \ function would have to have this signature:\n\n\n\nbool operator<(const X& rhs)\
+    \ const { /* do actual comparison with *this */ }\n\n\n\n\n(Note the \nconst\n\
+    \ at the end.)\n\n\n\n2\n \nIt should be noted that the built-in version of \n\
+    ||\n and \n&&\n use shortcut semantics. While the user defined ones (because they\
+    \ are syntactic sugar for method calls) do not use shortcut semantics. User will\
+    \ expect these operators to have shortcut semantics, and their code may depend\
+    \ on it, Therefore it is highly advised NEVER to define them.\n\n\n\nArithmetic\
+    \ Operators\n\n\n\nUnary arithmetic operators\n\n\n\nThe unary increment and decrement\
+    \ operators come in both prefix and postfix flavor. To tell one from the other,\
+    \ the postfix variants take an additional dummy int argument. If you overload\
+    \ increment or decrement, be sure to always implement both prefix and postfix\
+    \ versions.\nHere is the canonical implementation of increment, decrement follows\
+    \ the same rules:\n\n\n\nclass X {\n  X& operator++()\n  {\n    // do actual increment\n\
+    \    return *this;\n  }\n  X operator++(int)\n  {\n    X tmp(*this);\n    operator++();\n\
+    \    return tmp;\n  }\n};\n\n\n\n\nNote that the postfix variant is implemented\
+    \ in terms of prefix. Also note that postfix does an extra copy.\n2\n\n\n\nOverloading\
+    \ unary minus and plus is not very common and probably best avoided. If needed,\
+    \ they should probably be overloaded as member functions. \n\n\n\n2\n \nAlso note\
+    \ that the postfix variant does more work and is therefore less efficient to use\
+    \ than the prefix variant. This is a good reason to generally prefer prefix increment\
+    \ over postfix increment. While compilers can usually optimize away the additional\
+    \ work of postfix increment for built-in types, they might not be able to do the\
+    \ same for user-defined types (which could be something as innocently looking\
+    \ as a list iterator). Once you got used to do \ni++\n, it becomes very hard to\
+    \ remember to do \n++i\n instead when \ni\n is not of a built-in type (plus you'd\
+    \ have to change code when changing a type), so it is better to make a habit of\
+    \ always using prefix increment, unless postfix is explicitly needed.\n\n\n\n\
+    Binary arithmetic operators\n\n\n\nFor the binary arithmetic operators, do not\
+    \ forget to obey the third basic rule operator overloading: If you provide \n\
+    +\n, also provide \n+=\n, if you provide \n-\n, do not omit \n-=\n, etc. Andrew\
+    \ Koenig is said to have been the first to observe that the compound assignment\
+    \ operators can be used as a base for their non-compound counterparts. That is,\
+    \ operator \n+\n is implemented in terms of \n+=\n, \n-\n is implemented in terms\
+    \ of \n-=\n etc.\n\n\n\nAccording to our rules of thumb, \n+\n and its companions\
+    \ should be non-members, while their compound assignment counterparts (\n+=\n\
+    \ etc.), changing their left argument, should be a member. Here is the exemplary\
+    \ code for \n+=\n and \n+\n, the other binary arithmetic operators should be implemented\
+    \ in the same way:\n\n\n\nclass X {\n  X& operator+=(const X& rhs)\n  {\n    //\
+    \ actual addition of rhs to *this\n    return *this;\n  }\n};\ninline X operator+(X\
+    \ lhs, const X& rhs)\n{\n  lhs += rhs;\n  return lhs;\n}\n\n\n\n\noperator+=\n\
+    \ returns its result per reference, while \noperator+\n returns a copy of its\
+    \ result. Of course, returning a reference is usually more efficient than returning\
+    \ a copy, but in the case of \noperator+\n, there is no way around the copying.\
+    \ When you write \na + b\n, you expect the result to be a new value, which is\
+    \ why \noperator+\n has to return a new value.\n3\n\nAlso note that \noperator+\n\
+    \ takes its left operand \nby copy\n rather than by const reference. The reason\
+    \ for this is the same as the reason giving for \noperator=\n taking its argument\
+    \ per copy.\n\n\n\nThe bit manipulation operators \n~\n \n&\n \n|\n \n^\n \n<<\n\
+    \ \n>>\n should be implemented in the same way as the arithmetic operators. However,\
+    \ (except for overloading \n<<\n and \n>>\n for output and input) there are very\
+    \ few reasonable use cases for overloading these.\n\n\n\n3\n \nAgain, the lesson\
+    \ to be taken from this is that \na += b\n is, in general, more efficient than\
+    \ \na + b\n and should be preferred if possible.\n\n\n\nArray Subscripting\n\n\
+    \n\nThe array subscript operator is a binary operator which must be implemented\
+    \ as a class member. It is used for container-like types that allow access to\
+    \ their data elements by a key.\nThe canonical form of providing these is this:\n\
+    \n\n\nclass X {\n        value_type& operator[](index_type idx);\n  const value_type&\
+    \ operator[](index_type idx) const;\n  // ...\n};\n\n\n\n\nUnless you do not want\
+    \ users of your class to be able to change data elements returned by \noperator[]\n\
+    \ (in which case you can omit the non-const variant), you should always provide\
+    \ both variants of the operator.\n\n\n\nIf value_type is known to refer to a built-in\
+    \ type, the const variant of the operator should return a copy instead of a const\
+    \ reference.\n\n\n\nOperators for Pointer-like Types\n\n\n\nFor defining your\
+    \ own iterators or smart pointers, you have to overload the unary prefix dereference\
+    \ operator \n*\n and the binary infix pointer member access operator \n->\n:\n\
+    \n\n\nclass my_ptr {\n        value_type& operator*();\n  const value_type& operator*()\
+    \ const;\n        value_type* operator->();\n  const value_type* operator->()\
+    \ const;\n};\n\n\n\n\nNote that these, too, will almost always need both a const\
+    \ and a non-const version.\nFor the \n->\n operator, if \nvalue_type\n is of \n\
+    class\n (or \nstruct\n or \nunion\n) type, another \noperator->()\n is called\
+    \ recursively, until an \noperator->()\n returns a value of non-class type.\n\n\
+    \n\nThe unary address-of operator should never be overloaded.\n\n\n\nFor \noperator->*()\n\
+    \ see \nthis question\n. It's rarely used and thus rarely ever overloaded. In\
+    \ fact, even iterators do not overload it.\n\n\n\n\n\n\nContinue to \nConversion\
+    \ Operators\n\n    "
+- - What are the basic rules and idioms for operator overloading?
+  - "\n\nThe Three Basic Rules of Operator Overloading in C++\n\n\n\nWhen it comes\
+    \ to operator overloading in C++, there are \nthree basic rules you should follow\n\
+    . As with all such rules, there are indeed exceptions. Sometimes people have deviated\
+    \ from them and the outcome was not bad code, but such positive deviations are\
+    \ few and far between. At the very least, 99 out of 100 such deviations I have\
+    \ seen were unjustified. However, it might just as well have been 999 out of 1000.\
+    \ So you’d better stick to the following rules. \n\n\n\n\n\nWhenever the meaning\
+    \ of an operator is not obviously clear and undisputed, it should not be overloaded.\n\
+    \ \nInstead, provide a function with a well-chosen name.\n\nBasically, the first\
+    \ and foremost rule for overloading operators, at its very heart, says: \nDon’t\
+    \ do it\n. That might seem strange, because there is a lot to be known about operator\
+    \ overloading and so a lot of articles, book chapters, and other texts deal with\
+    \ all this. But despite this seemingly obvious evidence, \nthere are only a surprisingly\
+    \ few cases where operator overloading is appropriate\n. The reason is that actually\
+    \ it is hard to understand the semantics behind the application of an operator\
+    \ unless the use of the operator in the application domain is well known and undisputed.\
+    \ Contrary to popular belief, this is hardly ever the case.  \n\n\nAlways stick\
+    \ to the operator’s well-known semantics.\n\nC++ poses no limitations on the semantics\
+    \ of overloaded operators. Your compiler will happily accept code that implements\
+    \ the binary \n+\n operator to subtract from its right operand. However, the users\
+    \ of such an operator would never suspect the expression \na + b\n to subtract\
+    \ \na\n from \nb\n. Of course, this supposes that the semantics of the operator\
+    \ in the application domain is undisputed. \n\n\nAlways provide all out of a set\
+    \ of related operations.\n\n\nOperators are related to each other\n and to other\
+    \ operations. If your type supports \na + b\n, users will expect to be able to\
+    \ call \na += b\n, too. If it supports prefix increment \n++a\n, they will expect\
+    \ \na++\n to work as well. If they can check whether \na < b\n, they will most\
+    \ certainly expect to also to be able to check whether \na > b\n. If they can\
+    \ copy-construct your type, they expect assignment to work as well. \n\n\n\n\n\
+    \n\n\n\nContinue to \nThe Decision between Member and Non-member\n.\n\n    "
+- - What are the basic rules and idioms for operator overloading?
+  - "\n\nThe General Syntax of operator overloading in C++\n\n\n\nYou cannot change\
+    \ the meaning of operators for built-in types in C++, operators can only be overloaded\
+    \ for user-defined types\n1\n. That is, at least one of the operands has to be\
+    \ of a user-defined type. As with other overloaded functions, operators can be\
+    \ overloaded for a certain set of parameters only once. \n\n\n\nNot all operators\
+    \ can be overloaded in C++. Among the operators that cannot be overloaded are:\
+    \ \n.\n \n::\n \nsizeof\n \ntypeid\n \n.*\n and the only ternary operator in C++,\
+    \ \n?:\n \n\n\n\nAmong the operators that can be overloaded in C++ are these:\
+    \ \n\n\n\n\n\narithmetic operators: \n+\n \n-\n \n*\n \n/\n \n%\n and \n+=\n \n\
+    -=\n \n*=\n \n/=\n \n%=\n (all binary infix); \n+\n \n-\n (unary prefix); \n++\n\
+    \ \n--\n (unary prefix and postfix) \n\n\nbit manipulation: \n&\n \n|\n \n^\n\
+    \ \n<<\n \n>>\n and \n&=\n \n|=\n \n^=\n \n<<=\n \n>>=\n (all binary infix); \n\
+    ~\n (unary prefix) \n\n\nboolean algebra: \n==\n \n!=\n \n<\n \n>\n \n<=\n \n\
+    >=\n \n||\n \n&&\n (all binary infix); \n!\n (unary prefix)\n\n\nmemory management:\
+    \ \nnew\n \nnew[]\n \ndelete\n \ndelete[]\n\n\nimplicit conversion operators\n\
+    \n\nmiscellany: \n=\n \n[]\n \n->\n \n->*\n \n,\n  (all binary infix); \n*\n \n\
+    &\n (all unary prefix) \n()\n (function call, n-ary infix) \n\n\n\n\n\nHowever,\
+    \ the fact that you \ncan\n overload all of these does not mean you \nshould\n\
+    \ do so. See the basic rules of operator overloading.\n\n\n\nIn C++, operators\
+    \ are overloaded in the form of \nfunctions with special names\n. As with other\
+    \ functions, overloaded operators can generally be implemented either as a \n\
+    member function of their left operand's type\n or as \nnon-member functions\n\
+    . Whether you are free to choose or bound to use either one depends on several\
+    \ criteria.\n2\n A unary operator \n@\n3\n, applied to an object x, is invoked\
+    \ either as \noperator@(x)\n or as \nx.operator@()\n. A binary infix operator\
+    \ \n@\n, applied to the objects \nx\n and \ny\n, is called either as \noperator@(x,y)\n\
+    \ or as \nx.operator@(y)\n.\n4\n \n\n\n\nOperators that are implemented as non-member\
+    \ functions are sometimes friend of their operand’s type. \n\n\n\n1\n \nThe term\
+    \ “user-defined” might be slightly misleading. C++ makes the distinction between\
+    \ built-in types and user-defined types. To the former belong for example int,\
+    \ char, and double; to the latter belong all struct, class, union, and enum types,\
+    \ including those from the standard library, even though they are not, as such,\
+    \ defined by users.\n\n\n\n2\n \nThis is covered in \na later part\n of this FAQ.\n\
+    \n\n\n3\n \nThe \n@\n is not a valid operator in C++ which is why I use it as\
+    \ a placeholder.\n\n\n\n4\n \nThe only ternary operator in C++ cannot be overloaded\
+    \ and the only n-ary operator must always be implemented as a member function.\n\
+    \n\n\n\n\n\nContinue to \nThe Three Basic Rules of Operator Overloading in C++\n\
+    . \n\n    "
+- - What is The Rule of Three?
+  - "\n\nIntroduction\n\n\n\nC++ treats variables of user-defined types with \nvalue\
+    \ semantics\n.\nThis means that objects are implicitly copied in various contexts,\n\
+    and we should understand what \"copying an object\" actually means.\n\n\n\nLet\
+    \ us consider a simple example:\n\n\n\nclass person\n{\n    std::string name;\n\
+    \    int age;\n\npublic:\n\n    person(const std::string& name, int age) : name(name),\
+    \ age(age)\n    {\n    }\n};\n\nint main()\n{\n    person a(\"Bjarne Stroustrup\"\
+    , 60);\n    person b(a);   // What happens here?\n    b = a;         // And here?\n\
+    }\n\n\n\n\n(If you are puzzled by the \nname(name), age(age)\n part,\nthis is\
+    \ called a \nmember initializer list\n.)\n\n\n\nSpecial member functions\n\n\n\
+    \nWhat does it mean to copy a \nperson\n object?\nThe \nmain\n function shows\
+    \ two distinct copying scenarios.\nThe initialization \nperson b(a);\n is performed\
+    \ by the \ncopy constructor\n.\nIts job is to construct a fresh object based on\
+    \ the state of an existing object.\nThe assignment \nb = a\n is performed by the\
+    \ \ncopy assignment operator\n.\nIts job is generally a little more complicated,\n\
+    because the target object is already in some valid state that needs to be dealt\
+    \ with.\n\n\n\nSince we declared neither the copy constructor nor the assignment\
+    \ operator (nor the destructor) ourselves,\nthese are implicitly defined for us.\
+    \ Quote from the standard:\n\n\n\n\n  \nThe [...] copy constructor and copy assignment\
+    \ operator, [...] and destructor are special member functions.\n  [ \nNote\n:\
+    \ \nThe implementation will implicitly declare these member functions\n  for some\
+    \ class types when the program does not explicitly declare them.\n\n  The implementation\
+    \ will implicitly define them if they are used. [...] \nend note\n ]\n  [n3126.pdf\
+    \ section 12 §1]\n\n\n\n\n\nBy default, copying an object means copying its members:\n\
+    \n\n\n\n  \nThe implicitly-defined copy constructor for a non-union class X performs\
+    \ a memberwise copy of its subobjects.\n  [n3126.pdf section 12.8 §16]\n\n  \n\
+    \  \nThe implicitly-defined copy assignment operator for a non-union class X performs\
+    \ memberwise copy assignment\n  of its subobjects.\n  [n3126.pdf section 12.8\
+    \ §30]\n\n\n\n\n\nImplicit definitions\n\n\n\nThe implicitly-defined special member\
+    \ functions for \nperson\n look like this:\n\n\n\n// 1. copy constructor\nperson(const\
+    \ person& that) : name(that.name), age(that.age)\n{\n}\n\n// 2. copy assignment\
+    \ operator\nperson& operator=(const person& that)\n{\n    name = that.name;\n\
+    \    age = that.age;\n    return *this;\n}\n\n// 3. destructor\n~person()\n{\n\
+    }\n\n\n\n\nMemberwise copying is exactly what we want in this case:\n\nname\n\
+    \ and \nage\n are copied, so we get a self-contained, independent \nperson\n object.\n\
+    The implicitly-defined destructor is always empty.\nThis is also fine in this\
+    \ case since we did not acquire any resources in the constructor.\nThe members'\
+    \ destructors are implicitly called after the \nperson\n destructor is finished:\n\
+    \n\n\n\n  \nAfter executing the body of the destructor and destroying any automatic\
+    \ objects allocated within the body,\n  a destructor for class X calls the destructors\
+    \ for X's direct [...] members\n  [n3126.pdf 12.4 §6]\n\n\n\n\n\nManaging resources\n\
+    \n\n\nSo when should we declare those special member functions explicitly?\nWhen\
+    \ our class \nmanages a resource\n, that is,\nwhen an object of the class is \n\
+    responsible\n for that resource.\nThat usually means the resource is \nacquired\n\
+    \ in the constructor\n(or passed into the constructor) and \nreleased\n in the\
+    \ destructor.\n\n\n\nLet us go back in time to pre-standard C++.\nThere was no\
+    \ such thing as \nstd::string\n, and programmers were in love with pointers.\n\
+    The \nperson\n class might have looked like this:\n\n\n\nclass person\n{\n   \
+    \ char* name;\n    int age;\n\npublic:\n\n    // the constructor acquires a resource:\n\
+    \    // in this case, dynamic memory obtained via new[]\n    person(const char*\
+    \ the_name, int the_age)\n    {\n        name = new char[strlen(the_name) + 1];\n\
+    \        strcpy(name, the_name);\n        age = the_age;\n    }\n\n    // the\
+    \ destructor must release this resource via delete[]\n    ~person()\n    {\n \
+    \       delete[] name;\n    }\n};\n\n\n\n\nEven today, people still write classes\
+    \ in this style and get into trouble:\n\"\nI pushed a person into a vector and\
+    \ now I get crazy memory errors!\n\"\nRemember that by default, copying an object\
+    \ means copying its members,\nbut copying the \nname\n member merely copies a\
+    \ pointer, \nnot\n the character array it points to!\nThis has several unpleasant\
+    \ effects:\n\n\n\n\n\nChanges via \na\n can be observed via \nb\n.\n\n\nOnce \n\
+    b\n is destroyed, \na.name\n is a dangling pointer.\n\n\nIf \na\n is destroyed,\
+    \ deleting the dangling pointer yields \nundefined behavior\n.\n\n\nSince the\
+    \ assignment does not take into account what \nname\n pointed to before the assignment,\n\
+    sooner or later you will get memory leaks all over the place.\n\n\n\n\n\nExplicit\
+    \ definitions\n\n\n\nSince memberwise copying does not have the desired effect,\
+    \ we must define the copy constructor and the copy assignment operator explicitly\
+    \ to make deep copies of the character array:\n\n\n\n// 1. copy constructor\n\
+    person(const person& that)\n{\n    name = new char[strlen(that.name) + 1];\n \
+    \   strcpy(name, that.name);\n    age = that.age;\n}\n\n// 2. copy assignment\
+    \ operator\nperson& operator=(const person& that)\n{\n    if (this != &that)\n\
+    \    {\n        delete[] name;\n        // This is a dangerous point in the flow\
+    \ of execution!\n        // We have temporarily invalidated the class invariants,\n\
+    \        // and the next statement might throw an exception,\n        // leaving\
+    \ the object in an invalid state :(\n        name = new char[strlen(that.name)\
+    \ + 1];\n        strcpy(name, that.name);\n        age = that.age;\n    }\n  \
+    \  return *this;\n}\n\n\n\n\nNote the difference between initialization and assignment:\n\
+    we must tear down the old state before assigning to \nname\n to prevent memory\
+    \ leaks.\nAlso, we have to protect against self-assignment of the form \nx = x\n\
+    .\nWithout that check, \ndelete[] name\n would delete the array containing the\
+    \ \nsource\n string,\nbecause when you write \nx = x\n, both \nthis->name\n and\
+    \ \nthat.name\n contain the same pointer.\n\n\n\nException safety\n\n\n\nUnfortunately,\
+    \ this solution will fail if \nnew char[...]\n throws an exception due to memory\
+    \ exhaustion.\nOne possible solution is to introduce a local variable and reorder\
+    \ the statements:\n\n\n\n// 2. copy assignment operator\nperson& operator=(const\
+    \ person& that)\n{\n    char* local_name = new char[strlen(that.name) + 1];\n\
+    \    // If the above statement throws,\n    // the object is still in the same\
+    \ state as before.\n    // None of the following statements will throw an exception\
+    \ :)\n    strcpy(local_name, that.name);\n    delete[] name;\n    name = local_name;\n\
+    \    age = that.age;\n    return *this;\n}\n\n\n\n\nThis also takes care of self-assignment\
+    \ without an explicit check.\nAn even more robust solution to this problem is\
+    \ the \ncopy-and-swap idiom\n,\nbut I will not go into the details of exception\
+    \ safety here.\nI only mentioned exceptions to make the following point: \nWriting\
+    \ classes that manage resources is hard.\n\n\n\nNoncopyable resources\n\n\n\n\
+    Some resources cannot or should not be copied, such as file handles or mutexes.\n\
+    In that case, simply declare the copy constructor and copy assignment operator\
+    \ as \nprivate\n without giving a definition:\n\n\n\nprivate:\n\n    person(const\
+    \ person& that);\n    person& operator=(const person& that);\n\n\n\n\nAlternatively,\
+    \ you can inherit from \nboost::noncopyable\n or declare them as deleted (in C++11\
+    \ and above):\n\n\n\nperson(const person& that) = delete;\nperson& operator=(const\
+    \ person& that) = delete;\n\n\n\n\nThe rule of three\n\n\n\nSometimes you need\
+    \ to implement a class that manages a resource.\n(Never manage multiple resources\
+    \ in a single class,\nthis will only lead to pain.)\nIn that case, remember the\
+    \ \nrule of three\n:\n\n\n\n\n  \nIf you need to explicitly declare either the\
+    \ destructor,\n  copy constructor or copy assignment operator yourself,\n  you\
+    \ probably need to explicitly declare all three of them.\n\n\n\n\n\n(Unfortunately,\
+    \ this \"rule\" is not enforced by the C++ standard or any compiler I am aware\
+    \ of.)\n\n\n\nThe rule of five\n\n\n\nFrom C++11 on, an object has 2 extra special\
+    \ member functions: the move constructor and move assignment. The rule of five\
+    \ states to implement these functions as well.\n\n\n\nAn example with the signatures:\n\
+    \n\n\nclass person\n{\n    std::string name;\n    int age;\n\npublic:\n    person(const\
+    \ std::string& name, int age);        // Ctor\n    person(const person &) = default;\
+    \                // Copy Ctor\n    person(person &&) noexcept = default;     \
+    \       // Move Ctor\n    person& operator=(const person &) = default;     //\
+    \ Copy Assignment\n    person& operator=(person &&) noexcept = default; // Move\
+    \ Assignment\n    ~person() noexcept = default;                    // Dtor\n};\n\
+    \n\n\n\nThe rule of zero\n\n\n\nThe rule of 3/5 is also referred to as the rule\
+    \ of 0/3/5. The zero part of the rule states that you are allowed to not write\
+    \ any of the special member functions when creating your class.\n\n\n\nAdvice\n\
+    \n\n\nMost of the time, you do not need to manage a resource yourself,\nbecause\
+    \ an existing class such as \nstd::string\n already does it for you.\nJust compare\
+    \ the simple code using a \nstd::string\n member\nto the convoluted and error-prone\
+    \ alternative using a \nchar*\n and you should be convinced.\nAs long as you stay\
+    \ away from raw pointer members, the rule of three is unlikely to concern your\
+    \ own code.\n\n    "
+- - What is The Rule of Three?
+  - "\n\nThe \nRule of Three\n is a rule of thumb for C++, basically saying \n\n\n\
+    \n\n  \nIf your class needs any of\n\n  \n  \n\n  \na \ncopy constructor\n,\n\n\
+    \  \nan \nassignment operator\n, \n\n  \nor a \ndestructor\n, \n\n  \n\n  \n \
+    \ \ndefined explictly, then it is likely to need \nall three of them\n.\n\n\n\n\
+    \n\nThe reasons for this is that all three of them are usually used to manage\
+    \ a resource, and if your class manages a resource, it usually needs to manage\
+    \ copying as well as freeing. \n\n\n\nIf there is no good semantic for copying\
+    \ the resource your class manages, then consider to forbid copying by declaring\
+    \ (not \ndefining\n) the copy constructor and assignment operator as \nprivate\n\
+    . \n\n\n\n(Note that the forthcoming new version of the C++ standard (which is\
+    \ C++11) adds move semantics to C++, which will likely change the Rule of Three.\
+    \ However, I know too little about this to write a C++11 section about the Rule\
+    \ of Three.)\n\n    "
+- - What is The Rule of Three?
+  - "\n\nThe law of the big three is as specified above.\n\n\n\nAn easy example, in\
+    \ plain English, of the kind of problem it solves:\n\n\n\nNon default destructor\n\
+    \n\n\nYou allocated memory in your constructor and so you need to write a destructor\
+    \ to delete it.  Otherwise you will cause a memory leak.\n\n\n\nYou might think\
+    \ that this is job done. \n\n\n\nThe problem will be, if a copy is made of your\
+    \ object, then the copy will point to the same memory as the original object.\n\
+    \n\n\nOnce, one of these deletes the memory in its destructor, the other will\
+    \ have a pointer to invalid memory (this is called a dangling pointer) when it\
+    \ tries to use it things are going to get hairy.\n\n\n\nTherefore, you write a\
+    \ copy constructor so that it allocates new objects their own pieces of memory\
+    \ to destroy.\n\n\n\nAssignment operator and copy constructor\n\n\n\nYou allocated\
+    \ memory in your constructor to a member pointer of your class.  When you copy\
+    \ an object of this class the default assignment operator and copy constructor\
+    \ will copy the value of this member pointer to the new object.\n\n\n\nThis means\
+    \ that the new object and the old object will be pointing at the same piece of\
+    \ memory so when you change it in one object it will be changed for the other\
+    \ objerct too.  If one object deletes this memory the other will carry on trying\
+    \ to use it - eek.\n\n\n\nTo resolve this you write your own version of the copy\
+    \ constructor and assignment operator.  Your versions allocate separate memory\
+    \ to the new objects and copy across the values that the first pointer is pointing\
+    \ to rather than its address.\n\n    "
+- - What is the copy-and-swap idiom?
+  - "\n\nOverview\n\n\n\nWhy do we need the copy-and-swap idiom?\n\n\n\nAny class\
+    \ that manages a resource (a \nwrapper\n, like a smart pointer) needs to implement\
+    \ \nThe Big Three\n. While the goals and implementation of the copy-constructor\
+    \ and destructor are straightforward, the copy-assignment operator is arguably\
+    \ the most nuanced and difficult. How should it be done? What pitfalls need to\
+    \ be avoided?\n\n\n\nThe \ncopy-and-swap idiom\n is the solution, and elegantly\
+    \ assists the assignment operator in achieving two things: avoiding \ncode duplication\n\
+    , and providing a \nstrong exception guarantee\n.\n\n\n\nHow does it work?\n\n\
+    \n\nConceptually\n, it works by using the copy-constructor's functionality to\
+    \ create a local copy of the data, then takes the copied data with a \nswap\n\
+    \ function, swapping the old data with the new data. The temporary copy then destructs,\
+    \ taking the old data with it. We are left with a copy of the new data.\n\n\n\n\
+    In order to use the copy-and-swap idiom, we need three things: a working copy-constructor,\
+    \ a working destructor (both are the basis of any wrapper, so should be complete\
+    \ anyway), and a \nswap\n function.\n\n\n\nA swap function is a \nnon-throwing\n\
+    \ function that swaps two objects of a class, member for member. We might be tempted\
+    \ to use \nstd::swap\n instead of providing our own, but this would be impossible;\
+    \ \nstd::swap\n uses the copy-constructor and copy-assignment operator within\
+    \ its implementation, and we'd ultimately be trying to define the assignment operator\
+    \ in terms of itself!\n\n\n\n(Not only that, but unqualified calls to \nswap\n\
+    \ will use our custom swap operator, skipping over the unnecessary construction\
+    \ and destruction of our class that \nstd::swap\n would entail.)\n\n\n\n\n\n\n\
+    An in-depth explanation\n\n\n\nThe goal\n\n\n\nLet's consider a concrete case.\
+    \ We want to manage, in an otherwise useless class, a dynamic array. We start\
+    \ with a working constructor, copy-constructor, and destructor:\n\n\n\n#include\
+    \ <algorithm> // std::copy\n#include <cstddef> // std::size_t\n\nclass dumb_array\n\
+    {\npublic:\n    // (default) constructor\n    dumb_array(std::size_t size = 0)\n\
+    \        : mSize(size),\n          mArray(mSize ? new int[mSize]() : nullptr)\n\
+    \    {\n    }\n\n    // copy-constructor\n    dumb_array(const dumb_array& other)\n\
+    \        : mSize(other.mSize),\n          mArray(mSize ? new int[mSize] : nullptr),\n\
+    \    {\n        // note that this is non-throwing, because of the data\n     \
+    \   // types being used; more attention to detail with regards\n        // to\
+    \ exceptions must be given in a more general case, however\n        std::copy(other.mArray,\
+    \ other.mArray + mSize, mArray);\n    }\n\n    // destructor\n    ~dumb_array()\n\
+    \    {\n        delete [] mArray;\n    }\n\nprivate:\n    std::size_t mSize;\n\
+    \    int* mArray;\n};\n\n\n\n\nThis class almost manages the array successfully,\
+    \ but it needs \noperator=\n to work correctly.\n\n\n\nA failed solution\n\n\n\
+    \nHere's how a naive implementation might look:\n\n\n\n// the hard part\ndumb_array&\
+    \ operator=(const dumb_array& other)\n{\n    if (this != &other) // (1)\n    {\n\
+    \        // get rid of the old data...\n        delete [] mArray; // (2)\n   \
+    \     mArray = nullptr; // (2) *(see footnote for rationale)\n\n        // ...and\
+    \ put in the new\n        mSize = other.mSize; // (3)\n        mArray = mSize\
+    \ ? new int[mSize] : nullptr; // (3)\n        std::copy(other.mArray, other.mArray\
+    \ + mSize, mArray); // (3)\n    }\n\n    return *this;\n}\n\n\n\n\nAnd we say\
+    \ we're finished; this now manages an array, without leaks. However, it suffers\
+    \ from three problems, marked sequentially in the code as \n(n)\n.\n\n\n\n\n\n\
+    The first  is the self-assignment test. This check serves two purposes: it's an\
+    \ easy way to prevent us from running needless code on self-assignment, and it\
+    \ protects us from subtle bugs (such as deleting the array only to try and copy\
+    \ it). But in all other cases it merely serves to slow the program down, and act\
+    \ as noise in the code; self-assignment rarely occurs, so most of the time this\
+    \ check is a waste. It would be better if the operator could work properly without\
+    \ it.\n\n\nThe second is that it only provides a basic exception guarantee. If\
+    \ \nnew int[mSize]\n fails, \n*this\n will have been modified. (Namely, the size\
+    \ is wrong and the data is gone!) For a strong exception guarantee, it would need\
+    \ to be something akin to:\n\n\n\ndumb_array& operator=(const dumb_array& other)\n\
+    {\n    if (this != &other) // (1)\n    {\n        // get the new data ready before\
+    \ we replace the old\n        std::size_t newSize = other.mSize;\n        int*\
+    \ newArray = newSize ? new int[newSize]() : nullptr; // (3)\n        std::copy(other.mArray,\
+    \ other.mArray + newSize, newArray); // (3)\n\n        // replace the old data\
+    \ (all are non-throwing)\n        delete [] mArray;\n        mSize = newSize;\n\
+    \        mArray = newArray;\n    }\n\n    return *this;\n}\n\n\n\nThe code has\
+    \ expanded! Which leads us to the third problem: code duplication. Our assignment\
+    \ operator effectively duplicates all the code we've already written elsewhere,\
+    \ and that's a terrible thing.\n\n\n\n\n\nIn our case, the core of it is only\
+    \ two lines (the allocation and the copy), but with more complex resources this\
+    \ code bloat can be quite a hassle. We should strive to never repeat ourselves.\n\
+    \n\n\n(One might wonder: if this much code is needed to manage one resource correctly,\
+    \ what if my class manages more than one? While this may seem to be a valid concern,\
+    \ and indeed it requires non-trivial \ntry\n/\ncatch\n clauses, this is a non-issue.\
+    \ That's because a class should manage \none resource only\n!)\n\n\n\nA successful\
+    \ solution\n\n\n\nAs mentioned, the copy-and-swap idiom will fix all these issues.\
+    \ But right now, we have all the requirements except one: a \nswap\n function.\
+    \ While The Rule of Three successfully entails the existence of our copy-constructor,\
+    \ assignment operator, and destructor, it should really be called \"The Big Three\
+    \ and A Half\": any time your class manages a resource it also makes sense to\
+    \ provide a \nswap\n function.\n\n\n\nWe need to add swap functionality to our\
+    \ class, and we do that as follows†:\n\n\n\nclass dumb_array\n{\npublic:\n   \
+    \ // ...\n\n    friend void swap(dumb_array& first, dumb_array& second) // nothrow\n\
+    \    {\n        // enable ADL (not necessary in our case, but good practice)\n\
+    \        using std::swap;\n\n        // by swapping the members of two objects,\n\
+    \        // the two objects are effectively swapped\n        swap(first.mSize,\
+    \ second.mSize);\n        swap(first.mArray, second.mArray);\n    }\n\n    //\
+    \ ...\n};\n\n\n\n\n(\nHere\n is the explanation why \npublic friend swap\n.) Now\
+    \ not only can we swap our \ndumb_array\n's, but swaps in general can be more\
+    \ efficient; it merely swaps pointers and sizes, rather than allocating and copying\
+    \ entire arrays. Aside from this bonus in functionality and efficiency, we are\
+    \ now ready to implement the copy-and-swap idiom.\n\n\n\nWithout further ado,\
+    \ our assignment operator is:\n\n\n\ndumb_array& operator=(dumb_array other) //\
+    \ (1)\n{\n    swap(*this, other); // (2)\n\n    return *this;\n}\n\n\n\n\nAnd\
+    \ that's it! With one fell swoop, all three problems are elegantly tackled at\
+    \ once.\n\n\n\nWhy does it work?\n\n\n\nWe first notice an important choice: the\
+    \ parameter argument is taken \nby-value\n. While one could just as easily do\
+    \ the following (and indeed, many naive implementations of the idiom do):\n\n\n\
+    \ndumb_array& operator=(const dumb_array& other)\n{\n    dumb_array temp(other);\n\
+    \    swap(*this, temp);\n\n    return *this;\n}\n\n\n\n\nWe lose an \nimportant\
+    \ optimization opportunity\n. Not only that, but this choice is critical in C++11,\
+    \ which is discussed later. (On a general note, a remarkably useful guideline\
+    \ is as follows: if you're going to make a copy of something in a function, let\
+    \ the compiler do it in the parameter list.‡)\n\n\n\nEither way, this method of\
+    \ obtaining our resource is the key to eliminating code duplication: we get to\
+    \ use the code from the copy-constructor to make the copy, and never need to repeat\
+    \ any bit of it. Now that the copy is made, we are ready to swap.\n\n\n\nObserve\
+    \ that upon entering the function that all the new data is already allocated,\
+    \ copied, and ready to be used. This is what gives us a strong exception guarantee\
+    \ for free: we won't even enter the function if construction of the copy fails,\
+    \ and it's therefore not possible to alter the state of \n*this\n. (What we did\
+    \ manually before for a strong exception guarantee, the compiler is doing for\
+    \ us now; how kind.)\n\n\n\nAt this point we are home-free, because \nswap\n is\
+    \ non-throwing. We swap our current data with the copied data, safely altering\
+    \ our state, and the old data gets put into the temporary. The old data is then\
+    \ released when the function returns. (Where upon the parameter's scope ends and\
+    \ its destructor is called.)\n\n\n\nBecause the idiom repeats no code, we cannot\
+    \ introduce bugs within the operator. Note that this means we are rid of the need\
+    \ for a self-assignment check, allowing a single uniform implementation of \n\
+    operator=\n. (Additionally, we no longer have a performance penalty on non-self-assignments.)\n\
+    \n\n\nAnd that is the copy-and-swap idiom.\n\n\n\nWhat about C++11?\n\n\n\nThe\
+    \ next version of C++, C++11, makes one very important change to how we manage\
+    \ resources: the Rule of Three is now \nThe Rule of Four\n (and a half). Why?\
+    \ Because not only do we need to be able to copy-construct our resource, \nwe\
+    \ need to move-construct it as well\n.\n\n\n\nLuckily for us, this is easy:\n\n\
+    \n\nclass dumb_array\n{\npublic:\n    // ...\n\n    // move constructor\n    dumb_array(dumb_array&&\
+    \ other)\n        : dumb_array() // initialize via default constructor, C++11\
+    \ only\n    {\n        swap(*this, other);\n    }\n\n    // ...\n};\n\n\n\n\n\
+    What's going on here? Recall the goal of move-construction: to take the resources\
+    \ from another instance of the class, leaving it in a state guaranteed to be assignable\
+    \ and destructible.\n\n\n\nSo what we've done is simple: initialize via the default\
+    \ constructor (a C++11 feature), then swap with \nother\n; we know a default constructed\
+    \ instance of our class can safely be assigned and destructed, so we know \nother\n\
+    \ will be able to do the same, after swapping.\n\n\n\n(Note that some compilers\
+    \ do not support constructor delegation; in this case, we have to manually default\
+    \ construct the class. This is an unfortunate but luckily trivial task.)\n\n\n\
+    \nWhy does that work?\n\n\n\nThat is the only change we need to make to our class,\
+    \ so why does it work? Remember the ever-important decision we made to make the\
+    \ parameter a value and not a reference:\n\n\n\ndumb_array& operator=(dumb_array\
+    \ other); // (1)\n\n\n\n\nNow, if \nother\n is being initialized with an rvalue,\
+    \ \nit will be move-constructed\n. Perfect. In the same way C++03 let us re-use\
+    \ our copy-constructor functionality by taking the argument by-value, C++11 will\
+    \ \nautomatically\n pick the move-constructor when appropriate as well. (And,\
+    \ of course, as mentioned in previously linked article, the copying/moving of\
+    \ the value may simply be elided altogether.)\n\n\n\nAnd so concludes the copy-and-swap\
+    \ idiom.\n\n\n\n\n\n\nFootnotes\n\n\n\n*Why do we set \nmArray\n to null? Because\
+    \ if any further code in the operator throws, the destructor of \ndumb_array\n\
+    \ might be called; and if that happens without setting it to null, we attempt\
+    \ to delete memory that's already been deleted! We avoid this by setting it to\
+    \ null, as deleting null is a no-operation.\n\n\n\n†There are other claims that\
+    \ we should specialize \nstd::swap\n for our type, provide an in-class \nswap\n\
+    \ along-side a free-function \nswap\n, etc. But this is all unnecessary: any proper\
+    \ use of \nswap\n will be through an unqualified call, and our function will be\
+    \ found through \nADL\n. One function will do.\n\n\n\n‡The reason is simple: once\
+    \ you have the resource to yourself, you may swap and/or move it (C++11) anywhere\
+    \ it needs to be. And by making the copy in the parameter list, you maximize optimization.\n\
+    \n    "
+- - What is the copy-and-swap idiom?
+  - "\n\nAssignment, at its heart, is two steps: \ntearing down the object's old state\n\
+    \ and \nbuilding its new state as a copy\n of some other object's state. \n\n\n\
+    \nBasically, that's what the \ndestructor\n and the \ncopy constructor\n do, so\
+    \ the first idea would be to delegate the work to them. However, since destruction\
+    \ mustn't fail, while construction might, \nwe actually want to do it the other\
+    \ way around\n: \nfirst perform the constructive part\n and if that succeeded,\
+    \ \nthen do the destructive part\n. The copy-and-swap idiom is a way to do just\
+    \ that: It first calls a class' copy constructor to create a temporary, then swaps\
+    \ its data with the temporary's, and then lets the temporary's destructor destroy\
+    \ the old state.\n\nSince \nswap()\n is supposed to never fail, the only part\
+    \ which might fail is the copy-construction. That is performed first, and if it\
+    \ fails, nothing will be changed in the targeted object. \n\n\n\nIn its refined\
+    \ form, copy-and-swap is implemented by having the copy performed by initializing\
+    \ the (non-reference) parameter of the assignment operator: \n\n\n\nT& operator=(T\
+    \ tmp)\n{\n    this->swap(tmp);\n    return *this;\n}\n\n\n    "
+- - What is the copy-and-swap idiom?
+  - "\n\nThere are some good answers already.  I'll focus \nmainly\n on what I think\
+    \ they lack - an explanation of the \"cons\" with the copy-and-swap idiom....\n\
+    \n\n\n\n  \nWhat is the copy-and-swap idiom?\n\n\n\n\n\nA way of implementing\
+    \ the assignment operator in terms of a swap function:\n\n\n\nX& operator=(X rhs)\n\
+    {\n    swap(rhs);\n    return *this;\n}\n\n\n\n\nThe fundamental idea is that:\n\
+    \n\n\n\n\nthe most error-prone part of assigning to an object is ensuring any\
+    \ resources the new state needs are acquired (e.g. memory, descriptors)\n\n\n\
+    that acquisition can be attempted \nbefore\n modifying the current state of the\
+    \ object (i.e. \n*this\n) if a copy of the new value is made, which is why \n\
+    rhs\n is accepted \nby value\n (i.e. copied) rather than \nby reference\n\n\n\
+    swapping the state of the local copy \nrhs\n and \n*this\n is \nusually\n relatively\
+    \ easy to do without potential failure/exceptions, given the local copy doesn't\
+    \ need any particular state afterwards (just needs state fit for the destructor\
+    \ to run, much as for an object being \nmoved\n from in >= C++11)\n\n\n\n\n\n\n\
+    \  \nWhen should it be used?  (Which problems does it solve \n[/create]\n?)\n\n\
+    \n\n\n\n\n\nWhen you want the assigned-to objected unaffected by an assignment\
+    \ that throws an exception, assuming you have or can write a \nswap\n with strong\
+    \ exception guarantee, and ideally one that can't fail/\nthrow\n..†\n\n\nWhen\
+    \ you want a clean, easy to understand, robust way to define the assignment operator\
+    \ in terms of (simpler) copy constructor, \nswap\n and destructor functions.\n\
+    \n\n\n\n\nSelf-assignment done as a copy-and-swap avoids oft-overlooked edge cases.‡\n\
+    \n\n\n\n\nWhen any performance penalty or momentarily higher resource usage created\
+    \ by having an extra temporary object during the assignment is not important to\
+    \ your application. ⁂\n\n\n\n\n\n\n\n\n† \nswap\n throwing: it's generally possible\
+    \ to reliably swap data members that the objects track by pointer, but non-pointer\
+    \ data members that don't have a throw-free swap, or for which swapping has to\
+    \ be implemented as \nX tmp = lhs; lhs = rhs; rhs = tmp;\n and copy-construction\
+    \ or assignment may throw, still have the potential to fail leaving some data\
+    \ members swapped and others not.  This potential applies even to C++03 \nstd::string\n\
+    's as James comments on another answer:\n\n\n\n\n  \n@wilhelmtell: In C++03, there\
+    \ is no mention of exceptions potentially thrown by std::string::swap (which is\
+    \ called by std::swap). In C++0x, std::string::swap is noexcept and must not throw\
+    \ exceptions. – James McNellis Dec 22 '10 at 15:24 \n\n\n\n\n\n\n\n\n‡ assignment\
+    \ operator implementation that seems sane when assigning from a distinct object\
+    \ can easily fail for self-assignment.  While it might seem unimaginable that\
+    \ client code would even attempt self-assignment, it can happen relatively easily\
+    \ during algo operations on containers, with \nx = f(x);\n code where \nf\n is\
+    \ (perhaps only for some \n#ifdef\n branches) a macro ala \n#define f(x) x\n or\
+    \ a function returning a reference to \nx\n, or even (likely inefficient but concise)\
+    \ code like \nx = c1 ? x * 2 : c2 ? x / 2 : x;\n).  For example:\n\n\n\nstruct\
+    \ X\n{\n    T* p_;\n    size_t size_;\n    X& operator=(const X& rhs)\n    {\n\
+    \        delete[] p_;  // OUCH!\n        p_ = new T[size_ = rhs.size_];\n    \
+    \    std::copy(p_, rhs.p_, rhs.p_ + rhs.size_);\n    }\n    ...\n};\n\n\n\n\n\
+    On self-assignment, the above code delete's \nx.p_;\n, points \np_\n at a newly\
+    \ allocated heap region, then attempts to read the \nuninitialised\n data therein\
+    \ (Undefined Behaviour), if that doesn't do anything too weird, \ncopy\n attempts\
+    \ a self-assignment to every just-destructed 'T'!\n\n\n\n\n\n\n⁂ The copy-and-swap\
+    \ idiom can introduce inefficiencies or limitations due to the use of an extra\
+    \ temporary (when the operator's parameter is copy-constructed):\n\n\n\nstruct\
+    \ Client\n{\n    IP_Address ip_address_;\n    int socket_;\n    X(const X& rhs)\n\
+    \      : ip_address_(rhs.ip_address_), socket_(connect(rhs.ip_address_))\n   \
+    \ { }\n};\n\n\n\n\nHere, a hand-written \nClient::operator=\n might check if \n\
+    *this\n is already connected to the same server as \nrhs\n (perhaps sending a\
+    \ \"reset\" code if useful), whereas the copy-and-swap approach would invoke the\
+    \ copy-constructor which would likely be written to open a distinct socket connection\
+    \ then close the original one.  Not only could that mean a remote network interaction\
+    \ instead of a simple in-process variable copy, it could run afoul of client or\
+    \ server limits on socket resources or connections.  (Of course this class has\
+    \ a pretty horrid interface, but that's another matter ;-P).\n\n    "
+- - C++11 introduced a standardized memory model. What does it mean? And how is it
+    going to affect C++ programming?
+  - "\n\nFirst, you have to learn to think like a Language Lawyer.\n\n\n\nThe C++\
+    \ specification does not make reference to any particular compiler, operating\
+    \ system, or CPU.  It makes reference to an \nabstract machine\n that is a generalization\
+    \ of actual systems.  In the Language Lawyer world, the job of the programmer\
+    \ is to write code for the abstract machine; the job of the compiler is to actualize\
+    \ that code on a concrete machine.  By coding rigidly to the spec, you can be\
+    \ certain that your code will compile and run without modification on any system\
+    \ with a compliant C++ compiler, whether today or 50 years from now.\n\n\n\nThe\
+    \ abstract machine in the C++98/C++03 specification is fundamentally single-threaded.\
+    \  So it is not possible to write multi-threaded C++ code that is \"fully portable\"\
+    \ with respect to the spec.  The spec does not even say anything about the \n\
+    atomicity\n of memory loads and stores or the \norder\n in which loads and stores\
+    \ might happen, never mind things like mutexes.\n\n\n\nOf course, you can write\
+    \ multi-threaded code in practice for particular concrete systems – like pthreads\
+    \ or Windows.  But there is no \nstandard\n way to write multi-threaded code for\
+    \ C++98/C++03.\n\n\n\nThe abstract machine in C++11 is multi-threaded by design.\
+    \  It also has a well-defined \nmemory model\n; that is, it says what the compiler\
+    \ may and may not do when it comes to accessing memory.\n\n\n\nConsider the following\
+    \ example, where a pair of global variables are accessed concurrently by two threads:\n\
+    \n\n\n           Global\n           int x, y;\n\nThread 1            Thread 2\n\
+    x = 17;             cout << y << \" \";\ny = 37;             cout << x << endl;\n\
+    \n\n\n\nWhat might Thread 2 output?\n\n\n\nUnder C++98/C++03, this is not even\
+    \ Undefined Behavior; the question itself is \nmeaningless\n because the standard\
+    \ does not contemplate anything called a \"thread\".\n\n\n\nUnder C++11, the result\
+    \ is Undefined Behavior, because loads and stores need not be atomic in general.\
+    \  Which may not seem like much of an improvement...  And by itself, it's not.\n\
+    \n\n\nBut with C++11, you can write this:\n\n\n\n           Global\n         \
+    \  atomic<int> x, y;\n\nThread 1                 Thread 2\nx.store(17);      \
+    \       cout << y.load() << \" \";\ny.store(37);             cout << x.load()\
+    \ << endl;\n\n\n\n\nNow things get much more interesting.  First of all, the behavior\
+    \ here is \ndefined\n.  Thread 2 could now print \n0 0\n (if it runs before Thread\
+    \ 1), \n37 17\n (if it runs after Thread 1), or \n0 17\n (if it runs after Thread\
+    \ 1 assigns to x but before it assigns to y).\n\n\n\nWhat it cannot print is \n\
+    37 0\n, because the default mode for atomic loads/stores in C++11 is to enforce\
+    \ \nsequential consistency\n.  This just means all loads and stores must be \"\
+    as if\" they happened in the order you wrote them within each thread, while operations\
+    \ among threads can be interleaved however the system likes.  So the default behavior\
+    \ of atomics provides both \natomicity\n and \nordering\n for loads and stores.\n\
+    \n\n\nNow, on a modern CPU, ensuring sequential consistency can be expensive.\
+    \  In particular, the compiler is likely to emit full-blown memory barriers between\
+    \ every access here.  But if your algorithm can tolerate out-of-order loads and\
+    \ stores; i.e., if it requires atomicity but not ordering; i.e., if it can tolerate\
+    \ \n37 0\n as output from this program, then you can write this:\n\n\n\n     \
+    \      Global\n           atomic<int> x, y;\n\nThread 1                      \
+    \      Thread 2\nx.store(17,memory_order_relaxed);   cout << y.load(memory_order_relaxed)\
+    \ << \" \";\ny.store(37,memory_order_relaxed);   cout << x.load(memory_order_relaxed)\
+    \ << endl;\n\n\n\n\nThe more modern the CPU, the more likely this is to be faster\
+    \ than the previous example.\n\n\n\nFinally, if you just need to keep particular\
+    \ loads and stores in order, you can write:\n\n\n\n           Global\n       \
+    \    atomic<int> x, y;\n\nThread 1                            Thread 2\nx.store(17,memory_order_release);\
+    \   cout << y.load(memory_order_acquire) << \" \";\ny.store(37,memory_order_release);\
+    \   cout << x.load(memory_order_acquire) << endl;\n\n\n\n\nThis takes us back\
+    \ to the ordered loads and stores – so \n37 0\n is no longer a possible output\
+    \ – but it does so with minimal overhead.  (In this trivial example, the result\
+    \ is the same as full-blown sequential consistency; in a larger program, it would\
+    \ not be.)\n\n\n\nOf course, if the only outputs you want to see are \n0 0\n or\
+    \ \n37 17\n, you can just wrap a mutex around the original code.  But if you have\
+    \ read this far, I bet you already know how that works, and this answer is already\
+    \ longer than I intended :-).\n\n\n\nSo, bottom line. Mutexes are great, and C++11\
+    \ standardizes them. But sometimes for performance reasons you want lower-level\
+    \ primitives (e.g., the classic \ndouble-checked locking pattern\n).  The new\
+    \ standard provides high-level gadgets like mutexes and condition variables, and\
+    \ it also provides low-level gadgets like atomic types and the various flavors\
+    \ of memory barrier.  So now you can write sophisticated, high-performance concurrent\
+    \ routines entirely within the language specified by the standard, and you can\
+    \ be certain your code will compile and run unchanged on both today's systems\
+    \ and tomorrow's.\n\n\n\nAlthough to be frank, unless you are an expert and working\
+    \ on some serious low-level code, you should probably stick to mutexes and condition\
+    \ variables.  That's what I intend to do.\n\n\n\nFor more on this stuff, see \n\
+    this blog post\n.\n\n    "
+- - C++11 introduced a standardized memory model. What does it mean? And how is it
+    going to affect C++ programming?
+  - "\n\nI will just give the analogy with which I understand memory consistency models\
+    \ (or memory models, for short). It is inspired by Leslie Lamport's seminal paper\
+    \ \n\"Time, Clocks, and the Ordering of Events in a Distributed System\"\n.\n\
+    The analogy is apt and has fundamental significance, but may be overkill for many\
+    \ people. However, I hope it provides a mental image (a pictorial representation)\
+    \ that facilitates reasoning about memory consistency models.\n\n\n\nLet’s view\
+    \ the histories of all memory locations in a space-time diagram in which the horizontal\
+    \ axis represents the address space (i.e., each memory location is represented\
+    \ by a point on that axis) and the vertical axis represents time (we will see\
+    \ that, in general, there is not a universal notion of time). The history of values\
+    \ held by each memory location is, therefore, represented by a vertical column\
+    \ at that memory address. Each value change is due to one of the threads writing\
+    \ a new value to that location. By a \nmemory image\n, we will mean the aggregate/combination\
+    \ of values of all memory locations observable \nat a particular time\n by \n\
+    a particular thread\n.\n\n\n\nQuoting from \n\"A Primer on Memory Consistency\
+    \ and Cache Coherence\"\n\n\n\n\n  \nThe intuitive (and most restrictive) memory\
+    \ model is sequential consistency (SC) in which a multithreaded execution should\
+    \ look like an interleaving of the sequential executions of each constituent thread,\
+    \ as if the threads were time-multiplexed on a single-core processor.\n\n\n\n\n\
+    \nThat global memory order can vary from one run of the program to another and\
+    \ may not be known beforehand. The characteristic feature of SC is the set of\
+    \ horizontal slices in the address-space-time diagram representing \nplanes of\
+    \ simultaneity\n (i.e., memory images). On a given plane, all of its events (or\
+    \ memory values) are simultaneous. There is a notion of \nAbsolute Time\n, in\
+    \ which all threads agree on which memory values are simultaneous. In SC, at every\
+    \ time instant, there is only one memory image shared by all threads. That's,\
+    \ at every instant of time, all processors agree on the memory image (i.e., the\
+    \ aggregate content of memory). Not only does this imply that all threads view\
+    \ the same sequence of values for all memory locations, but also that all processors\
+    \ observe the same \ncombinations of values\n of all variables. This is the same\
+    \ as saying all memory operations (on all memory locations) are observed in the\
+    \ same total order by all threads.\n\n\n\nIn relaxed memory models, each thread\
+    \ will slice up address-space-time in its own way, the only restriction being\
+    \ that slices of each thread shall not cross each other because all threads must\
+    \ agree on the history of every individual memory location (of course, slices\
+    \ of different threads may, and will, cross each other). There is no universal\
+    \ way to slice it up (no privileged foliation of address-space-time). Slices do\
+    \ not have to be planar (or linear). They can be curved and this is what can make\
+    \ a thread read values written by another thread out of the order they were written\
+    \ in. Histories of different memory locations may slide (or get stretched) arbitrarily\
+    \ relative to each other \nwhen viewed by any particular thread\n. Each thread\
+    \ will have a different sense of which events (or, equivalently, memory values)\
+    \ are simultaneous. The set of events (or memory values) that are simultaneous\
+    \ to one thread are not simultaneous to another. Thus, in a relaxed memory model,\
+    \ all threads still observe the same history (i.e., sequence of values) for each\
+    \ memory location. But they may observe different memory images (i.e., combinations\
+    \ of values of all memory locations). Even if two different memory locations are\
+    \ written by the same thread in sequence, the two newly written values may be\
+    \ observed in different order by other threads.\n\n\n\n[Picture from Wikipedia]\n\
+    \n\n\n\nReaders familiar with Einstein’s \nSpecial Theory of Relativity\n will\
+    \ notice what I am alluding to. Translating Minkowski’s words into the memory\
+    \ models realm: address space and time are shadows of address-space-time. In this\
+    \ case, each observer (i.e., thread) will project shadows of events (i.e., memory\
+    \ stores/loads) onto his own world-line (i.e., his time axis) and his own plane\
+    \ of simultaneity (his address-space axis). Threads in the C++11 memory model\
+    \ correspond to \nobservers\n that are moving relative to each other in special\
+    \ relativity. Sequential consistency corresponds to the \nGalilean space-time\n\
+    \ (i.e., all observers agree on one absolute order of events and a global sense\
+    \ of simultaneity).\n\n\n\nThe resemblance between memory models and special relativity\
+    \ stems from the fact that both define a partially-ordered set of events, often\
+    \ called a causal set. Some events (i.e., memory stores) can affect (but not be\
+    \ affected by) other events. A C++11 thread (or observer in physics) is no more\
+    \ than a chain (i.e., a totally ordered set) of events (e.g., memory loads and\
+    \ stores to possibly different addresses).\n\n\n\nIn relativity, some order is\
+    \ restored to the seemingly chaotic picture of partially ordered events, since\
+    \ the only temporal ordering that all observers agree on is the ordering among\
+    \ “timelike” events (i.e., those events that are in principle connectible by any\
+    \ particle going slower than the speed of light in a vacuum). Only the timelike\
+    \ related events are invariantly ordered.\n\nTime in Physics, Craig Callender\n\
+    .\n\n\n\nIn C++11 memory model, a similar mechanism (the acquire-release consistency\
+    \ model) is used to establish these \nlocal causality relations\n.\n\n\n\nTo provide\
+    \ a definition of memory consistency and a motivation for abandoning SC, I will\
+    \ quote from \n\"A Primer on Memory Consistency and Cache Coherence\"\n\n\n\n\n\
+    \  \nFor a shared memory machine, the memory consistency model defines the architecturally\
+    \ visible behavior of its memory system. The correctness criterion for a single\
+    \ processor core partitions behavior between “\none correct result\n” and “\n\
+    many incorrect alternatives\n”. This is because the processor’s architecture mandates\
+    \ that the execution of a thread transforms a given input state into a single\
+    \ well-defined output state, even on an out-of-order core. Shared memory consistency\
+    \ models, however, concern the loads and stores of multiple threads and usually\
+    \ allow \nmany correct executions\n while disallowing many (more) incorrect ones.\
+    \ The possibility of multiple correct executions is due to the ISA allowing multiple\
+    \ threads to execute concurrently, often with many possible legal interleavings\
+    \ of instructions from different threads.\n\n  \n  \nRelaxed\n or \nweak\n memory\
+    \ consistency models are motivated by the fact that most memory orderings in strong\
+    \ models are unnecessary. If a thread updates ten data items and then a synchronization\
+    \ flag, programmers usually do not care if the data items are updated in order\
+    \ with respect to each other but only that all data items are updated before the\
+    \ flag is updated (usually implemented using FENCE instructions). Relaxed models\
+    \ seek to capture this increased ordering flexibility and preserve only the orders\
+    \ that programmers “\nrequire\n” to get both higher performance and correctness\
+    \ of SC. For example, in certain architectures, FIFO write buffers are used by\
+    \ each core to hold the results of committed (retired) stores before writing the\
+    \ results to the caches. This optimization enhances performance but violates SC.\
+    \ The write buffer hides the latency of servicing a store miss. Because stores\
+    \ are common, being able to avoid stalling on most of them is an important benefit.\
+    \ For a single-core processor, a write buffer can be made architecturally invisible\
+    \ by ensuring that a load to address A returns the value of the most recent store\
+    \ to A even if one or more stores to A are in the write buffer. This is typically\
+    \ done by either bypassing the value of the most recent store to A to the load\
+    \ from A, where “most recent” is determined by program order, or by stalling a\
+    \ load of A if a store to A is in the write buffer. When multiple cores are used,\
+    \ each will have its own bypassing write buffer. Without write buffers, the hardware\
+    \ is SC, but with write buffers, it is not, making write buffers architecturally\
+    \ visible in a multicore processor.\n\n  \n  \nStore-store reordering may happen\
+    \ if a core has a non-FIFO write buffer that lets stores depart in a different\
+    \ order than the order in which they entered. This might occur if the first store\
+    \ misses in the cache while the second hits or if the second store can coalesce\
+    \ with an earlier store (i.e., before the first store). Load-load reordering may\
+    \ also happen on dynamically-scheduled cores that execute instructions out of\
+    \ program order. That can behave the same as reordering stores on another core\
+    \ (Can you come up with an example interleaving between two threads?). Reordering\
+    \ an earlier load with a later store (a load-store reordering) can cause many\
+    \ incorrect behaviors, such as loading a value after releasing the lock that protects\
+    \ it (if the store is the unlock operation). Note that store-load reorderings\
+    \ may also arise due to local bypassing in the commonly implemented FIFO write\
+    \ buffer, even with a core that executes all instructions in program order.\n\n\
+    \n\n\n\nBecause cache coherence and memory consistency are sometimes confused,\
+    \ it is instructive to also have this quote:\n\n\n\n\n  \nUnlike consistency,\
+    \ \ncache coherence\n is neither visible to software nor required. Coherence seeks\
+    \ to make the caches of a shared-memory system as functionally invisible as the\
+    \ caches in a single-core system. Correct coherence ensures that a programmer\
+    \ cannot determine whether and where a system has caches by analyzing the results\
+    \ of loads and stores. This is because correct coherence ensures that the caches\
+    \ never enable new or different \nfunctional\n behavior (programmers may still\
+    \ be able to infer likely cache structure using \ntiming\n information). The main\
+    \ purpose of cache coherence protocols is maintaining the single-writer-multiple-readers\
+    \ (SWMR) invariant for every memory location.\n  An important distinction between\
+    \ coherence and consistency is that coherence is specified on a \nper-memory location\
+    \ basis\n, whereas consistency is specified with respect to \nall\n memory locations.\n\
+    \n\n\n\n\nContinuing with our mental picture, the SWMR invariant corresponds to\
+    \ the physical requirement that there be at most one particle located at any one\
+    \ location but there can be an unlimited number of observers of any location.\n\
+    \n    "
+- - C++11 introduced a standardized memory model. What does it mean? And how is it
+    going to affect C++ programming?
+  - "\n\nThis is now a multiple-year old question, but being very popular, it's worth\
+    \ mentioning a fantastic resource for learning about the C++11 memory model. I\
+    \ see no point in summing up his talk in order to make this yet another full answer,\
+    \ but given this is the guy who actually wrote the standard, I think it's well\
+    \ worth watching the talk.\n\n\n\nHerb Sutter has a three hour long talk about\
+    \ the C++11 memory model titled \"atomic<> Weapons\", available on the Channel9\
+    \ site - \npart 1\n and \npart 2\n. The talk is pretty technical, and covers the\
+    \ following topics:\n\n\n\n\n\nOptimizations, Races, and the Memory Model\n\n\n\
+    Ordering – What: Acquire and Release\n\n\nOrdering – How: Mutexes, Atomics, and/or\
+    \ Fences\n\n\nOther Restrictions on Compilers and Hardware\n\n\nCode Gen & Performance:\
+    \ x86/x64, IA64, POWER, ARM\n\n\nRelaxed Atomics\n\n\n\n\n\nThe talk doesn't elaborate\
+    \ on the API, but rather on the reasoning, background, under the hood and behind\
+    \ the scenes (did you know relaxed semantics were added to the standard only because\
+    \ POWER and ARM do not support synchronized load efficiently?).\n\n    "
