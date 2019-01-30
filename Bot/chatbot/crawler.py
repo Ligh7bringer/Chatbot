@@ -23,7 +23,7 @@ def parse_question(url, title):
     # page to be scraped
     page = requests.get(url, headers=headers, timeout=10)
     # initialise bs4
-    soup = BeautifulSoup(page.content, 'html5lib')
+    soup = BeautifulSoup(page.content, 'html.parser')
     # get the question data, contained in a <div> with class "postcell"
     question = soup.find('div', class_='postcell')
     if question is not None:
@@ -92,7 +92,7 @@ def write_to_file():
     yaml = YAML()
     yaml.default_flow_style = False
     # create output file
-    with open('chatbot/training_data/data.yml', 'w+') as outfile:
+    with open('chatbot/training_data/data.yaml', 'w+') as outfile:
         yaml.dump(final_data, outfile)
 
 
