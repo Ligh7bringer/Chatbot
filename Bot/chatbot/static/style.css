@@ -20,8 +20,13 @@ h3 {
 #chatbox {
     margin-left: auto;
     margin-right: auto;
-    width: 40%;
+    width: 100%;
+    height: 60vh;
     margin-top: 60px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    max-height: 60vh;
+    white-space: pre-wrap;
 }
 
 #userInput {
@@ -46,31 +51,26 @@ h3 {
 }
 
 .userText {
+    background-color: #009688;
     color: white;
     font-family: monospace;
     font-size: 17px;
-    text-align: right;
-    line-height: 30px;
-}
-
-.userText span {
-    background-color: #009688;
     padding: 10px;
-    border-radius: 2px;
+    text-align: left;
+    line-height: 20px;
+    margin-top: 20px;
 }
 
 .botText {
+    background-color: #EF5350;
     color: white;
     font-family: monospace;
     font-size: 17px;
-    text-align: left;
-    line-height: 30px;
-}
-
-.botText span {
-    background-color: #EF5350;
     padding: 10px;
-    border-radius: 2px;
+    text-align: left;
+    line-height: 20px;
+    margin-top: 20px;
+    word-wrap: normal;
 }
 
 #tidbit {
@@ -78,4 +78,33 @@ h3 {
     bottom:0;
     right:0;
     width: 300px;
+}
+
+a {
+  outline: none;
+  text-decoration: none;
+  padding: 2px 1px 0;
+}
+
+a:link {
+  color: #265301;
+}
+
+a:visited {
+  color: #437A16;
+}
+
+a:focus {
+  border-bottom: 1px solid;
+  background: #BAE498;
+}
+
+a:hover {
+  border-bottom: 1px solid;
+  background: #CDFEAA;
+}
+
+a:active {
+  background: #265301;
+  color: #CDFEAA;
 }

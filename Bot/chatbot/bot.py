@@ -5,52 +5,67 @@ from flask.cli import with_appcontext
 import os
 from . import crawler
 
-
+# initialise chatbot
 bot = ChatBot(
+    # name
     "C++ bot",
+    # data will be stored in a database
     storage_adapter="chatterbot.storage.SQLStorageAdapter",
+    # preprocessors
+    preprocessors= {
+        "chatterbot.preprocessors.unescape_html"
+    }
 )
 
 
+# the functions below will be used for command line commands
 def collect_data():
     crawler.run()
 
 
 def train():
     trainer = ChatterBotCorpusTrainer(bot)
-    trainer.train("chatbot/training_data/data.yaml")
+    trainer.train(
+        "chatterbot.corpus.english.greetings",
+        "chatbot/training_data/data.yaml"
+    )
 
 
 def del_db():
     os.remove("db.sqlite3")
 
 
+# define command line commands
 @click.command('crawl')
 @with_appcontext
 def crawl_command():
-    click.echo("Running crawler...")
+    click.echo("\nRunning crawler...")
     collect_data()
 
 
 @click.command('train')
 @with_appcontext
 def train_command():
-    click.echo("Training...")
+    click.echo("\nTraining...")
     train()
 
 
 @click.command('del_db')
 @with_appcontext
 def del_command():
-    click.echo("WARNING: Deleting chatbot database...")
-    del_db()
+    click.echo("\n\nWARNING: The chatbot database will be DELETED.")
+    response = input("Are you sure? [y/n]   ")
+    if response.lower() == 'y':
+        del_db()
 
 
+# register command line commands
 def init_app(app):
     app.cli.add_command(train_command)
     app.cli.add_command(crawl_command)
     app.cli.add_command(del_command)
 
 
+# returns a response to a certain question
 def get_bot_response(question):
     return bot.get_response(question)

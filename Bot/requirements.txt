@@ -8,3 +8,4 @@ requests
 ruamel.yaml
 bs4
 pytz
+lxml

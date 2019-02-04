@@ -14,7 +14,7 @@ Honours project 2018 - 2019
 
 # Commands
 After setting the enviromental variables, your options are:
-* `` flask crawl `` - collects data from StackOverflow which can be later used for training the bot (stored in **chatbot/training_data/data.yml**)
-* `` flask train `` - requires data collected from the above command. Trains the chatbot with the data
+* `` flask crawl `` - collects data from StackOverflow which can be later used for training the bot (stored in **chatbot/training_data/data.yaml**)
+* `` flask train `` - requires data collected from the above command and tains the chatbot using it
 * `` flask del_db `` - **deletes** the database generated after training the chatbot
 * `` flask run `` - runs a local server. The website can be accessed at **127.0.0.1:5000**
