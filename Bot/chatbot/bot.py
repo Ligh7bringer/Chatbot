@@ -14,7 +14,13 @@ bot = ChatBot(
     # preprocessors
     preprocessors= {
         "chatterbot.preprocessors.unescape_html"
-    }
+    },
+    logic_adapters=[
+        {
+            'import_path': 'chatterbot.logic.BestMatch',
+            'default_response': 'I am sorry, but I do not understand.'
+        }
+    ]
 )
 
 
@@ -24,11 +30,17 @@ def collect_data():
 
 
 def train():
+    PATH = 'chatbot/training_data/'
+
     trainer = ChatterBotCorpusTrainer(bot)
-    trainer.train(
-        "chatterbot.corpus.english.greetings",
-        "chatbot/training_data/data.yaml"
-    )
+    trainer.train("chatterbot.corpus.english.greetings")
+
+    files = os.listdir(PATH)
+    if files is None:
+        print("No files found in", PATH)
+    else:
+        for file in files:
+            trainer.train(PATH + file)
 
 
 def del_db():

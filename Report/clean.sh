@@ -1,0 +1,15 @@
+rm *.log
+rm *.idx
+rm *.toc
+rm *.dvi
+rm *.aux
+rm *.bbl
+rm *.blg
+rm *.brf
+rm *.out
+rm *.gz
+rm *.ilg
+rm *.nlo
+rm *.lof
+rm *.lot
+rm Dissertation.pdf

@@ -1,7 +1,10 @@
 import requests
 from ruamel.yaml import YAML
+from bs4 import BeautifulSoup
 import os
-from bs4 import BeautifulSoup, Tag
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 headers = {
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -9,20 +12,47 @@ headers = {
 }
 
 ''' URLs '''
+# stack overflow
+SO_URL = 'http://stackoverflow.com/'
+# question tagged 'c++'
 BASE_URL = 'https://stackoverflow.com/questions/tagged/c%2b%2b'
+# sort by votes
 SORT = '?sort=votes'
+# current page
 PAGE = '&page='
+# how many questions per page
 PAGE_SIZE_URL = '&pageSize='
 ''' --- '''
-PAGE_SIZE = 15  # how many questions per page
-NUM_ANSWERS = 2  # how many answers to be scraped from every question
-data = []  # a list to store the results
+# how many questions per page
+PAGE_SIZE = 10
+# how many answers to be scraped from every question
+NUM_ANSWERS = 3
+# in which directory to store results
+FILE_PATH = 'chatbot/training_data/'
+# results file name
+FILE_NAME = 'data'
+FILE_EXT = '.yaml'
+CATEGORIES = ["StackOverflow", "C++"]
+
+
+# writes the scraped data in yaml format in a file
+def write_to_file(data):
+    final_data = dict(categories=CATEGORIES, conversations=data)
+    # create output folder
+    if not os.path.exists(FILE_PATH):
+        os.makedirs(FILE_PATH + FILE_NAME)
+    # initialise yaml library
+    yaml = YAML()
+    yaml.default_flow_style = False
+    # create output file
+    with open(FILE_PATH + str(threading.get_ident()) + FILE_EXT, 'w+') as outfile:
+        yaml.dump(final_data, outfile)
 
 
 # extracts the question text and a list of answers from a single question on StackOverflow
-def parse_question(url, title):
+def parse_question(url, title, data):
     # page to be scraped
-    page = requests.get(url, headers=headers, timeout=10)
+    page = requests.get(url, headers=headers, timeout=(3, 30))
     # initialise bs4
     soup = BeautifulSoup(page.content, 'lxml')
     # get the question data, contained in a <div> with class "postcell"
@@ -40,14 +70,16 @@ def parse_question(url, title):
             # get the answer text
             answer = answers[i].find('div', class_='post-text').extract()  # .get_text(separator=' ')
             # store the question and the answer in their own list
-            answer = str(answer).replace("\n", "")
+            answer = str(answer)  # .replace("\n", "")
             entry = [title, answer]
             # add to the main list
             data.append(entry)
 
 
 # gets the links to all questions on a page of StackOverflow
-def crawl_pages(start, num_pages):
+def crawl_pages(num_pages, start):
+    # a list to store the results
+    data = []
     # define starting page
     current_page = start
     end = start + num_pages
@@ -61,7 +93,7 @@ def crawl_pages(start, num_pages):
             # init bs4
             soup = BeautifulSoup(source_code, 'lxml')
             # print a message showing the url of the page being crawled
-            print('crawling page ' + str(current_page) + ': ' + page_url)
+            print('crawling page ' + str(current_page) + ': ' + page_url + '\n')
             q_no = 0
             # get a link to each question
             for ques_link in soup.find_all('a', {'class': 'question-hyperlink'}):
@@ -69,12 +101,12 @@ def crawl_pages(start, num_pages):
                 if q_no == PAGE_SIZE:
                     break
                 # generate the link
-                url = 'http://stackoverflow.com/' + ques_link.get('href')
+                url = SO_URL + ques_link.get('href')
                 # print question title for debugging purposes
                 title = ques_link.get_text()
                 print(title)
                 # parse this question
-                parse_question(url, title)
+                parse_question(url, title, data)
                 # keep track of current question number
                 q_no += 1
             # move on to the next page
@@ -82,29 +114,23 @@ def crawl_pages(start, num_pages):
         except (KeyboardInterrupt, EOFError, SystemExit):  # catch some exceptions
             print("\nStopped by user!")
             break
-
-
-# writes the scraped data in yaml format in a file
-def write_to_file():
-    final_data = dict(categories=["StackOverflow", "C++"], conversations=data)
-    # create output folder
-    if not os.path.exists("chatbot/training_data"):
-        os.makedirs("chatbot/training_data")
-    # initialise yaml library
-    yaml = YAML()
-    yaml.default_flow_style = False
-    # create output file
-    with open('chatbot/training_data/data.yaml', 'w+') as outfile:
-        yaml.dump(final_data, outfile)
+    # print a message when done
+    print('\nDone crawling!')
+    print("Saving ", FILE_PATH + str(threading.get_ident()) + FILE_EXT)
+    write_to_file(data)
 
 
 def run():
     # how many pages to crawl
-    start_page = 1
-    num_pages = 1
-    crawl_pages(start_page, num_pages)
-    # print a message when done
-    print('\nDone crawling!')
-    print('Writing to file...')
-    # save data in a file
-    write_to_file()
+    num_pages = 5
+    # number of threads
+    workers = 3
+    func = partial(crawl_pages, num_pages)
+    try:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            for i in range(workers):
+                future = executor.submit(func, (i * num_pages + 1))
+    except (KeyboardInterrupt, EOFError, SystemExit):
+        print("Interrupted...")
+
+    print("\nAll threads finished!")
