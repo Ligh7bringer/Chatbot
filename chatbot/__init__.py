@@ -33,7 +33,7 @@ def create_app(test_config=None):
     @app.route('/webhook', methods=['POST'])
     def webhook():
         if request.method == 'POST':
-            repo = git.Repo('./Chatbot')
+            repo = git.Repo('./')
             origin = repo.remotes.origin
             repo.create_head('master', origin.refs.master).set_tracking_branch(origin.refs.master).checkout()
             origin.pull()
