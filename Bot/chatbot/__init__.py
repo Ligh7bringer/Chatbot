@@ -1,7 +1,5 @@
-from threading import Thread
 from flask import Flask, render_template, request
 import git
-from chatbot.PA_TOKEN import request_reload
 from . import bot
 
 ''' 
@@ -39,10 +37,7 @@ def create_app(test_config=None):
             origin = repo.remotes.origin
             repo.create_head('master', origin.refs.master).set_tracking_branch(origin.refs.master).checkout()
             origin.pull()
-            # ask pythonanywhere to reload
-            # the app after the changes are pulled
-            request_reload()
-            return 'Sending a request to pythonanywhere...', 200
+            return 'OK', 200
         else:
             return '', 400
 
