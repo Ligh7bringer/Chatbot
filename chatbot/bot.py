@@ -1,5 +1,6 @@
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
+import chatterbot
 import click
 from flask.cli import with_appcontext
 import os
@@ -9,6 +10,7 @@ from . import crawler
 bot = ChatBot(
     # name
     "C++ bot",
+    read_only=True,
     # data will be stored in a database
     storage_adapter="chatterbot.storage.SQLStorageAdapter",
     # preprocessors
@@ -17,8 +19,7 @@ bot = ChatBot(
     },
     logic_adapters=[
         {
-            'import_path': 'chatterbot.logic.BestMatch',
-            'default_response': 'I am sorry, but I do not understand.'
+            'import_path': 'chatbot.logic_adapter.BestMatch'
         }
     ]
 )
