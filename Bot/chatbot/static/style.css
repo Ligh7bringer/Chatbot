@@ -1,16 +1,19 @@
-/*body {*/
-    /*font-family: Ubuntu, monospace;*/
-/*}*/
-
-/*global style*/
-/*
-TO DO
- */
-
-/*style for specific elements*/
 body {
-    font-family: Ubuntu, Helvetica, Arial, monospace!important;
+    font-family: 'Ubuntu Mono', Helvetica, Arial, monospace;
+}
 
+a {
+    text-decoration:none;
+    border-bottom: 2px solid #9b0e27;
+    box-shadow: inset 0 -4px 0 #9b0e27;
+    color: inherit;
+    transition: background 0.1s cubic-bezier(.33,.66,.66,1);
+}
+
+a:hover {
+    color: inherit;
+    text-decoration:none;
+    background: #9b0e27;
 }
 
 h1 {
@@ -30,113 +33,12 @@ h1 {
 }
 
 #chatbox {
-    /*margin-left: auto;*/
-    /*margin-right: auto;*/
     width: 100%;
     height: 78vh;
     max-height: 78vh;
-    /*margin-top: 10px;*/
     overflow-y: scroll;
     overflow-x: hidden;
-    /*background: gray;*/
 }
-
-/*#userInput {*/
-    /*!*margin-left: auto;*!*/
-    /*!*margin-right: auto;*!*/
-    /*!*width: 60%;*!*/
-    /*margin-top: 10px;*/
-/*}*/
-
-/*#buttonInput {*/
-    /*float: right;*/
-/*}*/
-
-/*#textInput {*/
-    /*width: 87%;*/
-    /*border: none;*/
-    /*border-bottom: 3px solid #30638E;*/
-    /*font-size: 17px;*/
-    /*padding: 12px 10px;*/
-    /*line-height: 20px;*/
-/*}*/
-
-/*#textInput:focus {*/
-    /*border: 3px solid #30638E;*/
-/*}*/
-
-/*input[type=submit] {*/
-    /*background-color: #30638E;*/
-    /*color: white;*/
-    /*padding: 15px 32px;*/
-    /*text-align: center;*/
-    /*text-decoration: none;*/
-    /*display: inline-block;*/
-/*}*/
-
-/*input[type=submit]:hover {*/
-    /*background-color: #14964b;*/
-/*}*/
-
-/*.userText {*/
-    /*background-color: #009688;*/
-    /*color: white;*/
-    /*font-size: 17px;*/
-    /*padding: 10px;*/
-    /*text-align: left;*/
-    /*line-height: 20px;*/
-    /*margin-top: 20px;*/
-    /*border-radius: 5px;*/
-/*}*/
-
-/*.botText {*/
-    /*background-color: #EDAE49;*/
-    /*color: white;*/
-    /*!*font-family: monospace;*!*/
-    /*font-size: 17px;*/
-    /*padding: 10px;*/
-    /*text-align: left;*/
-    /*line-height: 20px;*/
-    /*margin-top: 20px;*/
-    /*word-wrap: normal;*/
-    /*border-radius: 5px;*/
-/*}*/
-
-#tidbit {
-    position:absolute;
-    bottom:0;
-    right:0;
-    width: 300px;
-}
-
-a {
-  text-decoration:none;
-  border-bottom: 2px solid #ef8b80;
-  box-shadow: inset 0 -4px 0 #ef8b80;
-  color: inherit;
-  transition: background 0.1s cubic-bezier(.33,.66,.66,1);
-}
-
-a:hover {
-  background: #ef8b80;
-}
-
-/*#chatbox::-webkit-scrollbar-track*/
-/*{*/
-	/*border: 1px solid #003D5B;*/
-	/*background-color: #65808e;*/
-/*}*/
-
-/*#chatbox::-webkit-scrollbar*/
-/*{*/
-	/*width: 10px;*/
-	/*background-color: #00b4f5;*/
-/*}*/
-
-/*#chatbox::-webkit-scrollbar-thumb*/
-/*{*/
-	/*background-color: #003D5B;*/
-/*}*/
 
 .force-to-bottom {
     position:absolute;

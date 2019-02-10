@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request
+import git
 from . import bot
 
 ''' 
@@ -28,6 +29,18 @@ def create_app(test_config=None):
     def get_bot_response():
         userText = request.args.get('msg')
         return str(bot.get_bot_response(userText))
+
+    @app.route('/webhook', methods=['POST'])
+    def webhook():
+        if request.method == 'POST':
+            repo = git.Repo('../../')
+            origin = repo.remotes.origin
+            repo.create_head('master',
+            origin.refs.master).set_tracking_branch(origin.refs.master).checkout()
+            origin.pull()
+            return '', 200
+        else:
+            return '', 400
 
     bot.init_app(app)
 

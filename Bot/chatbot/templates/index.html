@@ -3,22 +3,23 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="/static/style.css">
-    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
-
+    <link rel="stylesheet" type="text/css" href="/static/spinkit.css">
+    <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
     <title>Chatbot</title>
 </head>
 
 <body>
 
 <div class="container-fluid">
-
     <div class="row">
         <div class="col">
             <h1>Chatbot</h1>
@@ -43,7 +44,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
     <script>
@@ -52,15 +52,17 @@
             const rawText = textInput.val();
             if(rawText === "")
                 alert("Please ask a question...");
-                {#$("#buttonAlert").addClass('show');#}
             else {
                 const userHtml = '<div class="p-3 mb-2 bg-info text-white rounded">' + rawText + '</div>';
                 textInput.val("");
                 let chatbox =  $("#chatbox");
                 chatbox.append(userHtml);
                 chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
+                let load_anim = '<div class="sk-three-bounce"><div class="sk-child sk-bounce1"></div><div class="sk-child sk-bounce2"></div><div class="sk-child sk-bounce3"></div></div>';
+                chatbox.append(load_anim);
                 $.get("/get", {msg: rawText}).done(function (data) {
-                    const botHtml = '<div class="p-3 mb-2 bg-secondary text-white rounded">' + data + '</div>';
+                    const botHtml = '<div id="botText" class="p-3 mb-2 bg-secondary text-white rounded">' + data + '</div>';
+                    chatbox.children().last().remove();
                     chatbox.append(botHtml);
                     $('pre code').each(function(i, e) {hljs.highlightBlock(e)});
                 });
