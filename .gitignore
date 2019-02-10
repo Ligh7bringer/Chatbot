@@ -524,3 +524,5 @@ fabric.properties
 .history
 
 # End of https://www.gitignore.io/api/flask,latex,python,pycharm,visualstudiocode
+
+PA_TOKEN.py
