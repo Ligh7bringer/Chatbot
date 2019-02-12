@@ -11,4 +11,4 @@ before_script:
 
 script: py.test --cov-report term --cov=chatbot
 
-after-success: codecov
+after_success: codecov
