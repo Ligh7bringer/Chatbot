@@ -6,11 +6,18 @@ from chatbot.bot import del_command
 from chatbot.bot import crawl_command
 from chatbot.bot import clean_command
 
+"""
+Usage: run pytest from the project root (the tests will be discovered automatically)
+These tests do not use fixtures and assume a clean project folder. 
+That is, the database file and training data should NOT exist prior to running them.
+This is the case as they are only run from travis-CI. 
+"""
+
 DATA_DIR = os.path.join(os.getcwd(), 'chatbot/training_data')
 DB_FILE = os.path.join(os.getcwd(), 'db.sqlite3')
 
 """
-Create a test command ensure pytest is working.
+Create a test command to ensure pytest is working.
 """
 @app.cli.command('hello')
 @click.option('--name', default='World')
@@ -37,10 +44,13 @@ def test_hello():
 Tests whether the crawl command works.
 """
 def test_crawl():
-    threads = 1
+    threads = 2
     pages = 1
     runner = app.test_cli_runner()
     result = runner.invoke(crawl_command, ['--threads', threads, '--pages', pages, '--verbose', False])
+
+    assert result.output.count("{} threads".format(threads)) == 1
+    assert result.output.count("{} pages".format(pages)) == 1
 
     files = os.listdir(DATA_DIR)
     num_files = len(files)
@@ -49,18 +59,18 @@ def test_crawl():
 
 
 """
-Tests whether the chatbot can be trained using the 'train' command
+Tests whether the chatbot can be trained using the 'train' command.
 """
 def test_train():
     runner = app.test_cli_runner()
     result = runner.invoke(train_command)
 
     # assert training was successful
-    assert "Done" in result.output
+    assert "Couldn't find chatterbot.corpus" not in result.output
     
     # assert that the db file was created
-    exists = os.path.isfile(DB_FILE)
-    assert exists is True
+    db_exists = os.path.isfile(DB_FILE)
+    assert db_exists is True
 
 
 """
@@ -68,7 +78,7 @@ Tests that the database can be deleted using the 'del_db' command.
 """
 def test_del_db():
     runner = app.test_cli_runner()
-    result = runner.invoke(del_command)
+    runner.invoke(del_command)
     
     assert not os.path.exists(DB_FILE)
 
@@ -78,6 +88,6 @@ Tests that the training files can be deleted using the 'clean' command.
 """
 def test_clean():
     runner = app.test_cli_runner()
-    result = runner.invoke(clean_command)
+    runner.invoke(clean_command)
 
     assert not os.path.exists(DATA_DIR)

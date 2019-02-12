@@ -1,12 +1,12 @@
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
-import chatterbot
 import click
 from flask.cli import with_appcontext
 import os
 from . import crawler
 
-PATH_TRAIN_DATA = 'chatbot/training_data/'
+PATH_TRAIN_DATA = os.path.join(os.getcwd(), 'chatbot/training_data/')
+DB_NAME = "db.sqlite3"
 
 # initialise chatbot
 bot = ChatBot(
@@ -27,6 +27,16 @@ bot = ChatBot(
 )
 
 
+def get_files(dir):
+    files = []
+    try:
+        files = os.listdir(dir)
+    except (FileNotFoundError, FileExistsError, OSError):
+        print(dir, "does not exist or is empty.")
+
+    return files
+
+
 # the functions below are called by the command line commands
 def collect_data(threads, pages, verbose):
     crawler.run(threads, pages, verbose)
@@ -34,33 +44,34 @@ def collect_data(threads, pages, verbose):
 
 def train():
     trainer = ChatterBotCorpusTrainer(bot)
-    trainer.train("chatterbot.corpus.english.greetings")
+    try:
+        trainer.train("chatterbot.corpus.english.greetings")
+    except (OSError, FileExistsError, FileNotFoundError):
+        print("Couldn't find chatterbot.corpus! Are you sure its installed?")
 
-    files = os.listdir(PATH_TRAIN_DATA)
-    if files is None:
-        print("No files found in", PATH_TRAIN_DATA)
-    else:
-        for file in files:
-            trainer.train(os.path.join(PATH_TRAIN_DATA, file))
-        print("Done!")
+    files = get_files(PATH_TRAIN_DATA)
+    for file in files:
+        trainer.train(os.path.join(PATH_TRAIN_DATA, file))
 
 
 def del_db():
     try:
-        os.remove("db.sqlite3")
-    except:
-        print("Something went wrong when deleting the database.")
+        os.remove(os.path.join(os.getcwd(), DB_NAME))
+    except (FileNotFoundError, FileExistsError, OSError):
+        print("File doesn't exist.")
+        pass
 
 
 def clean():
-    files = os.listdir(PATH_TRAIN_DATA)
-    if files is None:
-        print("No files found in", PATH_TRAIN_DATA)
-    else:
-        for file in files:
-            os.remove(os.path.join(PATH_TRAIN_DATA, file))
-        print("Done! Deleted {} files from {}".format(len(files), PATH_TRAIN_DATA))
-    os.rmdir('chatbot/training_data')
+    files = get_files(PATH_TRAIN_DATA)
+
+    for file in files:
+        os.remove(os.path.join(PATH_TRAIN_DATA, file))
+    print("Deleted {} files from {}".format(len(files), PATH_TRAIN_DATA))
+    try:
+        os.rmdir(PATH_TRAIN_DATA)
+    except (FileNotFoundError, OSError):
+        print(PATH_TRAIN_DATA, "does not exist. Skipping.")
 
 
 # define command line commands
@@ -70,7 +81,7 @@ def clean():
 @click.option('-v', '--verbose', default=True)
 @with_appcontext
 def crawl_command(threads, pages, verbose):
-    click.echo("\nCrawling with {} threads ({} pages per thread\n)".format(threads, pages))
+    click.echo("\nCrawling with {} threads ({} pages per thread)\n".format(threads, pages))
     collect_data(threads, pages, verbose)
 
 

@@ -12,5 +12,5 @@ lxml>=4.3.1
 chatterbot-corpus>=1.2.0
 gitpython>=2.1.11
 pytest>=4.2.0
-pytest-cov
-codecov
+pytest-cov>=2.6.1
+codecov>=2.0.15
