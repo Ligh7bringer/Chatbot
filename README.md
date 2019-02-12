@@ -3,6 +3,7 @@ A chatbot which can answer programming-related questions
 
 # CI build status
 [![Build Status](https://travis-ci.org/Ligh7bringer/Chatbot.svg?branch=master)](https://travis-ci.org/Ligh7bringer/Chatbot)
+[![Requirements Status](https://requires.io/github/Ligh7bringer/Chatbot/requirements.svg?branch=master)](https://requires.io/github/Ligh7bringer/Chatbot/requirements/?branch=master)
 
 # Prerequisites
 * Python 3
