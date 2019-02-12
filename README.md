@@ -1,7 +1,7 @@
 # Honours project 2018 - 2019
 A chatbot which can answer programming-related questions
 
-# CI build status:
+# CI build status
 [![Build Status](https://travis-ci.org/Ligh7bringer/Chatbot.svg?branch=master)](https://travis-ci.org/Ligh7bringer/Chatbot)
 
 # Prerequisites

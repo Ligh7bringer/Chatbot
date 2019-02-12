@@ -6,6 +6,8 @@ from chatbot.bot import del_command
 from chatbot.bot import crawl_command
 from chatbot.bot import clean_command
 
+DATA_DIR = os.path.join(os.getcwd(), 'chatbot/training_data')
+DB_FILE = os.path.join(os.getcwd(), 'db.sqlite3')
 
 """
 Create a test command ensure pytest is working.
@@ -40,11 +42,10 @@ def test_crawl():
     runner = app.test_cli_runner()
     result = runner.invoke(crawl_command, ['--threads', threads, '--pages', pages, '--verbose', False])
 
-    # assert 'Crawling with 1 threads (1 pages per thread)' in result.output
-
-    files = os.listdir('chatbot/training_data')
-    assert len(files) > 0
-    assert len(files) == threads
+    files = os.listdir(DATA_DIR)
+    num_files = len(files)
+    assert num_files > 0
+    assert num_files == threads
 
 
 """
@@ -58,7 +59,7 @@ def test_train():
     assert "Done" in result.output
     
     # assert that the db file was created
-    exists = os.path.isfile('db.sqlite3')
+    exists = os.path.isfile(DB_FILE)
     assert exists is True
 
 
@@ -69,7 +70,7 @@ def test_del_db():
     runner = app.test_cli_runner()
     result = runner.invoke(del_command)
     
-    assert not os.path.exists('db.sqlite3')
+    assert not os.path.exists(DB_FILE)
 
 
 """
@@ -79,5 +80,4 @@ def test_clean():
     runner = app.test_cli_runner()
     result = runner.invoke(clean_command)
 
-    files = os.listdir('chatbot/training_data/')
-    assert len(files) is 0
+    assert not os.path.exists(DATA_DIR)

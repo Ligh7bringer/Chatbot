@@ -30,7 +30,6 @@ NUM_ANSWERS = 3
 # in which directory to store results
 FILE_PATH = 'chatbot/training_data/'
 # results file name
-FILE_NAME = 'data'
 FILE_EXT = '.yaml'
 CATEGORIES = ["StackOverflow", "C++"]
 VERBOSE_OUTPUT = True
@@ -41,7 +40,7 @@ def write_to_file(data):
     final_data = dict(categories=CATEGORIES, conversations=data)
     # create output folder
     if not os.path.exists(FILE_PATH):
-        os.makedirs(FILE_PATH + FILE_NAME)
+        os.makedirs(FILE_PATH)
     # initialise yaml library
     yaml = YAML()
     yaml.default_flow_style = False

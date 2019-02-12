@@ -60,6 +60,7 @@ def clean():
         for file in files:
             os.remove(os.path.join(PATH_TRAIN_DATA, file))
         print("Done! Deleted {} files from {}".format(len(files), PATH_TRAIN_DATA))
+    os.rmdir('chatbot/training_data')
 
 
 # define command line commands
