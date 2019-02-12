@@ -3,6 +3,7 @@ A chatbot which can answer programming-related questions
 
 # CI Status
 [![Build Status](https://travis-ci.org/Ligh7bringer/Chatbot.svg?branch=master)](https://travis-ci.org/Ligh7bringer/Chatbot)
+[![codecov](https://codecov.io/github/Ligh7bringer/Chatbot/branch/master/graphs/badge.svg)](https://codecov.io/github/Ligh7bringer/Chatbot) 
 [![Requirements Status](https://requires.io/github/Ligh7bringer/Chatbot/requirements.svg?branch=master)](https://requires.io/github/Ligh7bringer/Chatbot/requirements/?branch=master)
 
 # Prerequisites
@@ -19,7 +20,7 @@ A chatbot which can answer programming-related questions
 # Commands
 After setting the enviromental variables, your options are:
 * `` flask crawl `` - collects data from StackOverflow which can be later used for training the bot (stored in **chatbot/training_data/**). Command line arguments are:
---threads <int>, --pages <int>, --verbose <bool> 
+--threads *1/2/3/etc.*, --pages *1/5/20/etc.*, --verbose *True/False*
 * `` flask clean `` - deletes the data collected with `` flask crawl `` (stored in **chatbot/training_data/**)
 * `` flask train `` - requires data collected from the above command and tains the chatbot using it
 * `` flask del_db `` - **deletes** the database generated after training the chatbot
