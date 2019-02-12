@@ -9,4 +9,6 @@ before_script:
   - export FLASK_APP="$TRAVIS_BUILD_DIR/chatbot"
   - export FLASK_DEBUG=1
 
-script: pytest -W ignore::DeprecationWarning
+script: py.test --cov-report term --cov=chatbot
+
+after-success: codecov
