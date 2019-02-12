@@ -1,5 +1,8 @@
-### A chatbot which can answer programming-related questions
-Honours project 2018 - 2019
+# Honours project 2018 - 2019
+A chatbot which can answer programming-related questions
+
+# CI build status:
+[![Build Status](https://travis-ci.org/Ligh7bringer/Chatbot.svg?branch=master)](https://travis-ci.org/Ligh7bringer/Chatbot)
 
 # Prerequisites
 * Python 3
@@ -14,7 +17,9 @@ Honours project 2018 - 2019
 
 # Commands
 After setting the enviromental variables, your options are:
-* `` flask crawl `` - collects data from StackOverflow which can be later used for training the bot (stored in **chatbot/training_data/data.yaml**)
+* `` flask crawl `` - collects data from StackOverflow which can be later used for training the bot (stored in **chatbot/training_data/**). Command line arguments are:
+--threads <int>, --pages <int>, --verbose <bool> 
+* `` flask clean `` - deletes the data collected with `` flask crawl `` (stored in **chatbot/training_data/**)
 * `` flask train `` - requires data collected from the above command and tains the chatbot using it
 * `` flask del_db `` - **deletes** the database generated after training the chatbot
 * `` flask run `` - runs a local server. The website can be accessed at **127.0.0.1:5000**

@@ -33,6 +33,7 @@ FILE_PATH = 'chatbot/training_data/'
 FILE_NAME = 'data'
 FILE_EXT = '.yaml'
 CATEGORIES = ["StackOverflow", "C++"]
+VERBOSE_OUTPUT = True
 
 
 # writes the scraped data in yaml format in a file
@@ -93,7 +94,8 @@ def crawl_pages(num_pages, start):
             # init bs4
             soup = BeautifulSoup(source_code, 'lxml')
             # print a message showing the url of the page being crawled
-            print('crawling page ' + str(current_page) + ': ' + page_url + '\n')
+            if VERBOSE_OUTPUT is True:
+                print('crawling page ' + str(current_page) + ': ' + page_url + '\n')
             q_no = 0
             # get a link to each question
             for ques_link in soup.find_all('a', {'class': 'question-hyperlink'}):
@@ -104,7 +106,8 @@ def crawl_pages(num_pages, start):
                 url = SO_URL + ques_link.get('href')
                 # print question title for debugging purposes
                 title = ques_link.get_text()
-                print(title)
+                if VERBOSE_OUTPUT is True:
+                    print(title)
                 # parse this question
                 parse_question(url, title, data)
                 # keep track of current question number
@@ -116,15 +119,18 @@ def crawl_pages(num_pages, start):
             break
     # print a message when done
     print('\nDone crawling!')
-    print("Saving ", FILE_PATH + str(threading.get_ident()) + FILE_EXT)
+    if VERBOSE_OUTPUT is True:
+        print("Saving ", FILE_PATH + str(threading.get_ident()) + FILE_EXT)
     write_to_file(data)
 
 
-def run():
-    # how many pages to crawl
-    num_pages = 5
+def run(workers, num_pages, verbose):
+    global VERBOSE_OUTPUT
+    VERBOSE_OUTPUT = verbose
+    # number of pages each thread will crawl
+    num_pages = int(num_pages)
     # number of threads
-    workers = 3
+    workers = int(workers)
     func = partial(crawl_pages, num_pages)
     try:
         with ThreadPoolExecutor(max_workers=workers) as executor:
@@ -133,4 +139,4 @@ def run():
     except (KeyboardInterrupt, EOFError, SystemExit):
         print("Interrupted...")
 
-    print("\nAll threads finished!")
+    print("\nDone crawling!")

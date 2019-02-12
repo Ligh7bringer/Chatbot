@@ -11,3 +11,4 @@ pytz
 lxml
 chatterbot-corpus
 gitpython
+pytest
