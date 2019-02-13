@@ -21,7 +21,7 @@ bot = ChatBot(
     },
     logic_adapters=[
         {
-            'import_path': 'chatbot.logic_adapter.BestMatch'
+            'import_path': 'chatterbot.logic.BestMatch'
         }
     ]
 )
