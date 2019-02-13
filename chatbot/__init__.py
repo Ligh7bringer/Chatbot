@@ -36,10 +36,10 @@ def create_app(test_config=None):
         if request.method == 'POST':
             data = request.get_json()
             branch = str(data.get('ref'))
-            if branch == 'refs/heads/release':
+            if branch == 'refs/heads/master':
                 repo = git.Repo(os.getcwd())
                 origin = repo.remotes.origin
-                repo.create_head('release', origin.refs['release']).set_tracking_branch(origin.refs['release']).checkout()
+                repo.create_head('master', origin.refs.master).set_tracking_branch(origin.refs.master).checkout()
                 origin.pull()
                 return 'Pulling from release...', 200
             else:
