@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import git
+import os
 from . import bot
 
 ''' 
@@ -33,13 +34,18 @@ def create_app(test_config=None):
     @app.route('/webhook', methods=['POST'])
     def webhook():
         if request.method == 'POST':
-            repo = git.Repo('./')
-            origin = repo.remotes.origin
-            repo.create_head('master', origin.refs.master).set_tracking_branch(origin.refs.master).checkout()
-            origin.pull()
-            return 'OK', 200
-        else:
-            return '', 400
+            data = request.get_json()
+            branch = str(data.get('ref'))
+            if branch == 'refs/heads/release':
+                r = git.Repo(os.getcwd())
+                r.git.fetch()
+                r.git.checkout('release')
+                r.git.pull()
+                return 'Pulling from release...', 200
+            else:
+                return 'Ignoring request, branch is not release.', 200
+
+        return 'Invalid request type.', 400
 
     bot.init_app(app)
 
