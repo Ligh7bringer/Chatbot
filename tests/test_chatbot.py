@@ -15,12 +15,19 @@ Test whether the webhook returns the correct status codes.
 """
 def test_webhook(test_client):
     result = test_client.post('/webhook',
-                              data=json.dumps(dict(foo='bar')),
+                              data=json.dumps(dict(ref='refs/heads/release')),
                               content_type='application/json')
     assert result.status_code == 200
+    # assert "Pulling from release" in result.output
+
+    result = test_client.post('/webhook',
+                              data=json.dumps(dict(ref='refs/heads/master')),
+                              content_type='application/json')
+    assert result.status_code == 200
+    # assert "Ignoring request" in result.output
 
     result = test_client.get('/webhook')
-    assert result.status_code == 405
+    assert result.status_code == 405 or result.status_code == 400
 
 
 """

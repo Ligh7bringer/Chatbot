@@ -8,9 +8,9 @@ from chatbot.bot import clean_command
 
 """
 Usage: run pytest from the project root (the tests will be discovered automatically)
-These tests do not use fixtures and assume a clean project folder. 
+These tests do not use fixtures and assume a clean project folder.
 That is, the database file and training data should NOT exist prior to running them.
-This is the case as they are only run from travis-CI. 
+This is the case as they are only run from travis-CI.
 """
 
 DATA_DIR = os.path.join(os.getcwd(), 'chatbot/training_data')
@@ -26,7 +26,7 @@ def hello_command(name):
 
 
 """
-Test the sample command defined above. 
+Test the sample command defined above.
 """
 def test_hello():
     runner = app.test_cli_runner()
@@ -67,7 +67,7 @@ def test_train():
 
     # assert training was successful
     assert "Couldn't find chatterbot.corpus" not in result.output
-    
+
     # assert that the db file was created
     db_exists = os.path.isfile(DB_FILE)
     assert db_exists is True
@@ -79,7 +79,7 @@ Tests that the database can be deleted using the 'del_db' command.
 def test_del_db():
     runner = app.test_cli_runner()
     runner.invoke(del_command)
-    
+
     assert not os.path.exists(DB_FILE)
 
 

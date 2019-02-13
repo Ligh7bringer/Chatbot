@@ -37,10 +37,10 @@ def create_app(test_config=None):
             data = request.get_json()
             branch = str(data.get('ref'))
             if branch == 'refs/heads/release':
-                r = git.Repo(os.getcwd())
-                r.git.fetch()
-                r.git.checkout('release')
-                r.git.pull()
+                repo = git.Repo(os.getcwd())
+                origin = repo.remotes.origin
+                repo.create_head('release', origin.refs['release']).set_tracking_branch(origin.refs['release']).checkout()
+                origin.pull()
                 return 'Pulling from release...', 200
             else:
                 return 'Ignoring request, branch is not release.', 200
