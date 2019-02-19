@@ -39,6 +39,16 @@ def test_bot_response(init_bot):
     
     assert "hello" or "hi" in str(response).lower()
 
+    alt_question = "alternate response"
+    response = bot.get_bot_response(alt_question)
+
+    assert "greetings" in response.lower()
+
+    help_question = "Help"
+    response = bot.get_bot_response(help_question)
+
+    assert "You can type help to" in response
+
 
 def test_bot_get_request(test_client):
     result = test_client.get('/?msg=hi')
