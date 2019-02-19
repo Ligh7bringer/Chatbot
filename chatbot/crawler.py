@@ -1,10 +1,11 @@
 import requests
 from ruamel.yaml import YAML
 from bs4 import BeautifulSoup
-import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from chatbot.constants import *
+
 
 headers = {
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -27,25 +28,27 @@ PAGE_SIZE_URL = '&pageSize='
 PAGE_SIZE = 10
 # how many answers to be scraped from every question
 NUM_ANSWERS = 3
-# in which directory to store results
-FILE_PATH = 'chatbot/training_data/'
 # results file name
 FILE_EXT = '.yaml'
 CATEGORIES = ["StackOverflow", "C++"]
 VERBOSE_OUTPUT = True
+SCRAPE_FORMATTING = True
 
 
 # writes the scraped data in yaml format in a file
 def write_to_file(data):
     final_data = dict(categories=CATEGORIES, conversations=data)
     # create output folder
-    if not os.path.exists(FILE_PATH):
-        os.makedirs(FILE_PATH)
+    if not os.path.exists(DATA_DIR_PATH):
+        os.makedirs(DATA_DIR_PATH)
     # initialise yaml library
     yaml = YAML()
     yaml.default_flow_style = False
     # create output file
-    with open(FILE_PATH + str(threading.get_ident()) + FILE_EXT, 'w+') as outfile:
+    out_file = os.path.join(DATA_DIR_PATH, str(threading.get_ident()) + FILE_EXT)
+    if VERBOSE_OUTPUT is True:
+        print("Writing to", out_file)
+    with open(out_file, 'w+') as outfile:
         yaml.dump(final_data, outfile)
 
 
@@ -68,9 +71,12 @@ def parse_question(url, title, data):
         # for each answer found
         for i in range(0, end):
             # get the answer text
-            answer = answers[i].find('div', class_='post-text').extract()  # .get_text(separator=' ')
+            if SCRAPE_FORMATTING:
+                answer = answers[i].find('div', class_='post-text').extract()
+            else:
+                answer = answers[i].find('div', class_='post-text').get_text(separator='\n', strip=True)
             # store the question and the answer in their own list
-            answer = str(answer)  # .replace("\n", "")
+            answer = str(answer)
             entry = [title, answer]
             # add to the main list
             data.append(entry)
@@ -118,8 +124,6 @@ def crawl_pages(num_pages, start):
             break
     # print a message when done
     print('\nDone crawling!')
-    if VERBOSE_OUTPUT is True:
-        print("Saving ", FILE_PATH + str(threading.get_ident()) + FILE_EXT)
     write_to_file(data)
 
 

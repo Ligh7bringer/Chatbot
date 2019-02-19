@@ -28,8 +28,17 @@ def create_app(test_config=None):
 
     @app.route("/get")
     def get_bot_response():
-        userText = request.args.get('msg')
-        return str(bot.get_bot_response(userText))
+        user_text = request.args.get('msg')
+        alt_idx = request.args.get('alt_response')
+
+        if alt_idx is not None:
+            alt_idx = int(alt_idx)
+            alt_question = "ALT_RESPONSE, " + str(alt_idx)
+            app.logger.info(alt_question)
+            return str(bot.get_bot_response(alt_question))
+
+        app.logger.info("RESPONSE REQUESTED")
+        return str(bot.get_bot_response(user_text))
 
     @app.route('/webhook', methods=['POST'])
     def webhook():
@@ -41,9 +50,9 @@ def create_app(test_config=None):
                 origin = repo.remotes.origin
                 repo.create_head('master', origin.refs.master).set_tracking_branch(origin.refs.master).checkout()
                 origin.pull()
-                return 'Pulling from release...', 200
+                return 'Pulling from master...', 200
             else:
-                return 'Ignoring request, branch is not release.', 200
+                return 'Ignoring request, branch is not master.', 200
 
         return 'Invalid request type.', 400
 

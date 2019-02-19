@@ -36,4 +36,11 @@ Test whether the chatbot can respond.
 def test_bot_response(init_bot):
     question = "hi"
     response = bot.get_bot_response(question)
+    
     assert "hello" or "hi" in str(response).lower()
+
+
+def test_bot_get_request(test_client):
+    result = test_client.get('/?msg=hi')
+    
+    assert result.status_code == 200

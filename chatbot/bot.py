@@ -2,11 +2,13 @@ from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
 import click
 from flask.cli import with_appcontext
-import os
 from . import crawler
+from chatbot.constants import *
+import logging
 
-PATH_TRAIN_DATA = os.path.join(os.getcwd(), 'chatbot/training_data/')
-DB_NAME = "db.sqlite3"
+
+logging.basicConfig(level=logging.INFO)
+
 
 # initialise chatbot
 bot = ChatBot(
@@ -15,24 +17,29 @@ bot = ChatBot(
     read_only=True,
     # data will be stored in a database
     storage_adapter="chatterbot.storage.SQLStorageAdapter",
-    # preprocessors
-    preprocessors= {
-        "chatterbot.preprocessors.unescape_html"
-    },
     logic_adapters=[
         {
-            'import_path': 'chatterbot.logic.BestMatch'
+            'import_path':                  'chatbot.logic.best_match.BestMatch',
+            'default_response':             'I am sorry, but I do not understand.',
+            'maximum_similarity_threshold':  0.90
+        },
+        {
+            'import_path':                  'chatbot.logic.specific_response.SpecificResponseAdapter',
+            'input_text':                   'Help',
+            'output_text':                  'You can type <b>help</b> to show this message. </br>'
+                                            'After you ask a question, you can type <b>alternate response</b>'
+                                            ' to get another answer if the original one wasn\'t helpful.'
         }
     ]
 )
 
 
-def get_files(dir):
+def get_files(loc):
     files = []
     try:
-        files = os.listdir(dir)
+        files = os.listdir(loc)
     except (FileNotFoundError, FileExistsError, OSError):
-        print(dir, "does not exist or is empty.")
+        print(loc, "does not exist or is empty.")
 
     return files
 
@@ -44,34 +51,35 @@ def collect_data(threads, pages, verbose):
 
 def train():
     trainer = ChatterBotCorpusTrainer(bot)
+
     try:
         trainer.train("chatterbot.corpus.english.greetings")
     except (OSError, FileExistsError, FileNotFoundError):
-        print("Couldn't find chatterbot.corpus! Are you sure its installed?")
+        print("Couldn't find chatterbot.corpus! Are you sure it's installed?")
 
-    files = get_files(PATH_TRAIN_DATA)
+    files = get_files(DATA_DIR_PATH)
     for file in files:
-        trainer.train(os.path.join(PATH_TRAIN_DATA, file))
+        trainer.train(os.path.join(DATA_DIR_PATH, file))
 
 
 def del_db():
     try:
-        os.remove(os.path.join(os.getcwd(), DB_NAME))
+        os.remove(DB_FILE_PATH)
     except (FileNotFoundError, FileExistsError, OSError):
         print("File doesn't exist.")
         pass
 
 
 def clean():
-    files = get_files(PATH_TRAIN_DATA)
+    files = get_files(DATA_DIR_PATH)
 
     for file in files:
-        os.remove(os.path.join(PATH_TRAIN_DATA, file))
-    print("Deleted {} files from {}".format(len(files), PATH_TRAIN_DATA))
+        os.remove(os.path.join(DATA_DIR_PATH, file))
+    print("Deleted {} files from {}".format(len(files), DATA_DIR_PATH))
     try:
-        os.rmdir(PATH_TRAIN_DATA)
+        os.rmdir(DATA_DIR_PATH)
     except (FileNotFoundError, OSError):
-        print(PATH_TRAIN_DATA, "does not exist. Skipping.")
+        print(DATA_DIR_PATH, "does not exist. Skipping.")
 
 
 # define command line commands

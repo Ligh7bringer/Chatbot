@@ -1,10 +1,10 @@
 import click
-import os
 from chatbot.run_it import app
 from chatbot.bot import train_command
 from chatbot.bot import del_command
 from chatbot.bot import crawl_command
 from chatbot.bot import clean_command
+from chatbot.constants import *
 
 """
 Usage: run pytest from the project root (the tests will be discovered automatically)
@@ -13,8 +13,6 @@ That is, the database file and training data should NOT exist prior to running t
 This is the case as they are only run from travis-CI.
 """
 
-DATA_DIR = os.path.join(os.getcwd(), 'chatbot/training_data')
-DB_FILE = os.path.join(os.getcwd(), 'db.sqlite3')
 
 """
 Create a test command to ensure pytest is working.
@@ -52,7 +50,7 @@ def test_crawl():
     assert result.output.count("{} threads".format(threads)) == 1
     assert result.output.count("{} pages".format(pages)) == 1
 
-    files = os.listdir(DATA_DIR)
+    files = os.listdir(DATA_DIR_PATH)
     num_files = len(files)
     assert num_files > 0
     assert num_files == threads
@@ -69,7 +67,7 @@ def test_train():
     assert "Couldn't find chatterbot.corpus" not in result.output
 
     # assert that the db file was created
-    db_exists = os.path.isfile(DB_FILE)
+    db_exists = os.path.isfile(DB_FILE_PATH)
     assert db_exists is True
 
 
@@ -80,7 +78,7 @@ def test_del_db():
     runner = app.test_cli_runner()
     runner.invoke(del_command)
 
-    assert not os.path.exists(DB_FILE)
+    assert not os.path.exists(DB_FILE_PATH)
 
 
 """
@@ -90,4 +88,4 @@ def test_clean():
     runner = app.test_cli_runner()
     runner.invoke(clean_command)
 
-    assert not os.path.exists(DATA_DIR)
+    assert not os.path.exists(DATA_DIR_PATH)
