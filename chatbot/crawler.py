@@ -66,8 +66,8 @@ def parse_question(url, title, data):
         answers = soup.find_all('div', class_='answercell')
         # limit to max 3 answers per question
         end = len(answers)
-        if end > 3:
-            end = 3
+        if end > CRAWLER_NUM_ANSWERS:
+            end = CRAWLER_NUM_ANSWERS
         # for each answer found
         for i in range(0, end):
             # get the answer text
@@ -119,7 +119,8 @@ def crawl_pages(num_pages, start):
                 q_no += 1
             # move on to the next page
             current_page += 1
-        except (KeyboardInterrupt, EOFError, SystemExit):  # catch some exceptions
+        # catch some exceptions
+        except (KeyboardInterrupt, EOFError, SystemExit):
             print("\nStopped by user!")
             break
     # print a message when done

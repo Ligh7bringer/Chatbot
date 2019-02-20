@@ -6,13 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="/static/style.css">
-    <link rel="stylesheet" type="text/css" href="/static/spinkit.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/spinkit.css">
     <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-latest.min.js"></script>
-    <link rel="stylesheet" href="static/tomorrow-night.css">
+    <link rel="stylesheet" type="text/css" href="static/css/tomorrow-night.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
-    <script src="static/typopo.min.js"></script>
+    <script src="static/js/typopo.min.js"></script>
 
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
@@ -32,8 +31,9 @@
         <div class="col h-100">
             <div id="chatbox" class="border border-info rounded">
                 <div class="p-3 mb-2 bg-dark text-white rounded">
-                    Hi! Ask me a question. </br>
-                    <b>Tip:</b> <i>You can ask for <b><a href="#" id="helpLink">help</a></b> or an <b>alternate response</b> to your last question</i>.
+                    Hi! Ask me a question. <br/>
+                    <b>Tip:</b> <i>You can ask for <b><a href="#" id="helpLink">help</a></b>
+                    or an <b>alternate response</b> to your last question</i>.
                 </div>
             </div>
         </div>
@@ -51,94 +51,9 @@
     </div>
 </div>
 
-    <script>
-        const userDiv = '<div class="p-3 mb-2 bg-info text-white rounded">';
-        const botDiv = '<div id="botText" class="p-3 mb-2 bg-dark text-white rounded">';
-        const loadDiv = '<div class="sk-three-bounce"><div class="sk-child sk-bounce1"></div><div class="sk-child sk-bounce2"></div><div class="sk-child sk-bounce3"></div></div>';
-
-        let chatbox =  $("#chatbox");
-        let textInput = $("#textInput");
-        let lastMsg = "";
-        let responseIdx = 0;
-        let warning =   "<div class=\"alert alert-danger alert-dismissible fade show\" role=\"alert\">\n" +
-                        "  <strong>Oops!</strong> It looks like you haven't asked a question.\n" +
-                        "  <button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\">\n" +
-                        "    <span aria-hidden=\"true\">&times;</span>\n" +
-                        "  </button>\n" +
-                        "</div>";
-
-        function appendUserMsg(rawText) {
-            const userHtml =  userDiv + rawText + '</div>';
-            textInput.val("");
-            chatbox.append(userHtml);
-            chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
-            chatbox.append(loadDiv);
-        }
-
-        function getAlternateResponse() {
-            if(lastMsg === "") {
-                alert("You haven't asked any questions yet.")
-            } else {
-                appendUserMsg("alternate response");
-                responseIdx++;
-                if(responseIdx > 3) {
-                    chatbox.children().last().remove();
-                    let botHtml = botDiv + "I don't know anything else about <i>" + lastMsg + "</i>" + '</div>';
-                    chatbox.append(botHtml);
-                } else {
-                    $.get("/get", {msg: lastMsg, alt_response: responseIdx}).done(function (data) {
-                        chatbox.children().last().remove();
-                        const botHtml = botDiv + data + '</div>';
-                        chatbox.append(botHtml);
-                    });
-                }
-            }
-        }
-
-        function getBotResponse(rawText) {
-            if(rawText === "") {
-                chatbox.append(warning);
-                chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
-                window.setTimeout(function() {
-                    $(".alert").fadeTo(500, 0).slideUp(500, function(){
-                        $(this).remove();
-                    });
-                }, 2000);
-            } else if(rawText.toLowerCase() === "alternate response") {
-                getAlternateResponse()
-            } else {
-                rawText = fixTypos(rawText, "en-us");
-                lastMsg = rawText;
-                appendUserMsg(rawText);
-                $.get("/get", {msg: rawText}).done(function (data) {
-                    const botHtml = botDiv + data + '</div>';
-                    chatbox.children().last().remove();
-                    chatbox.append(botHtml);
-                    $('pre code').each(function(i, e) {hljs.highlightBlock(e)});
-                });
-            }
-        }
-
-        textInput.keypress(function(e) {
-            let rawText = textInput.val();
-            if(e.which === 13) {
-                getBotResponse(rawText);
-            }
-        });
-
-        $("#buttonInput").click(function() {
-            let rawText = textInput.val();
-            getBotResponse(rawText);
-        })
-
-        $('#helpLink').click(function () {
-            getBotResponse("Help");
-        })
-    </script>
-
-
-{#<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>#}
+<script src="https://code.jquery.com/jquery-latest.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+<script type="text/javascript" src="static/js/chatbot.js"></script>
 </body>
 </html>

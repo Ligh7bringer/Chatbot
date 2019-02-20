@@ -26,9 +26,7 @@ bot = ChatBot(
         {
             'import_path':                  'chatbot.logic.specific_response.SpecificResponseAdapter',
             'input_text':                   'Help',
-            'output_text':                  'You can type <b>help</b> to show this message. </br>'
-                                            'After you ask a question, you can type <b>alternate response</b>'
-                                            ' to get another answer if the original one wasn\'t helpful.'
+            'output_text':                  BOT_HELP_MSG
         }
     ]
 )
@@ -39,7 +37,7 @@ def get_files(loc):
     try:
         files = os.listdir(loc)
     except (FileNotFoundError, FileExistsError, OSError):
-        print(loc, "does not exist or is empty.")
+        print(loc, "does not exist or is empty. Skipping...")
 
     return files
 

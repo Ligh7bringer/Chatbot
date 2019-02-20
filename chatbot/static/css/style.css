@@ -45,3 +45,32 @@ h1 {
     bottom: 2%;
     width: 100%;
 }
+
+hr {
+    height: 1px;
+    background: white;
+    border: none;
+    outline: none;
+    margin: 1em 3em 1em;
+    position: relative;
+}
+hr:before {
+    /*content: attr(data-symbol);*/
+    position: absolute;
+    top: 0;
+    left: 50%;
+    background: black;
+    color: white;
+    padding: 0.5em 3em;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+hr#one {
+    width: 50%;
+    margin: 3em auto;
+}
+
+.custom-button-width {
+	width:150px;
+}

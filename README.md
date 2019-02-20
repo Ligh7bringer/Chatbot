@@ -1,5 +1,5 @@
 # Honours Project 2018 - 2019
-A chatbot which can answer C++ questions based on data from StackOverflow.
+A chatbot which can answer C++ questions based on data collected from StackOverflow.
 
 # CI Status
 [![Build Status](https://travis-ci.org/Ligh7bringer/Chatbot.svg?branch=master)](https://travis-ci.org/Ligh7bringer/Chatbot)
@@ -16,7 +16,7 @@ A chatbot which can answer C++ questions based on data from StackOverflow.
 2. ``pip install -r requirements.txt``
  (you may want to create a **virtual environment** before running this command)
 3. Set the environmental variables required by Flask:
- `` export FLASK_ENV=development; export FLASK_APP=chatbot ``
+`` export FLASK_ENV=development; export FLASK_APP=chatbot ``
 
 # Commands
 After setting the enviromental variables, your options are:

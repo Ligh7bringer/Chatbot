@@ -10,12 +10,18 @@ class BestMatch(LogicAdapter):
         self.cached_responses = []
 
     def process(self, input_statement, additional_response_selection_parameters=None):
-        # if an alternate response is selected,
+        # if an alternate response is requested,
         # just return it from the list of cached responses
         if input_statement.text.startswith("ALT_RESPONSE,"):
-            self.chatbot.logger.info("------ {}".format(len(self.cached_responses)))
             idx = int(input_statement.text[-1])
-            return self.cached_responses[idx]
+            self.chatbot.logger.info("Alternate response requested, "
+                                     "response {} from {} available.".format(idx, len(self.cached_responses)))
+            if self.cached_responses is None:
+                return "Try asking a question first."
+            elif idx > len(self.cached_responses) - 1:
+                return "Sorry, I don't know anything else about this :("
+            else:
+                return self.cached_responses[idx]
 
         search_results = self.search_algorithm.search(input_statement)
 
