@@ -1,0 +1,35 @@
+{% from 'bootstrap/utils.html' import render_static %}
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        {{ render_static('icon', 'favicon.ico') }}
+        {{ bootstrap.load_css() }}
+        {{ render_static('css', 'css/style.css') }}
+        {{ render_static('css', 'css/spinkit.css') }}
+        {{ render_static('css', 'https://fonts.googleapis.com/css?family=Ubuntu+Mono', False) }}
+        {{ render_static('css', 'css/hjs.css') }}
+        {{ render_static('js', 'js/highlight.pack.js') }}
+
+        <title>{{ title }}</title>
+    </head>
+
+    <body>
+        {% block content %}
+        <div class="container-fluid">
+            {% if title %}
+                <h1>{{ title }}</h1>
+            {% endif %}
+
+        {% block app_content %}
+        {% endblock %}
+
+        </div>
+        {% endblock %}
+
+        {{ bootstrap.load_js() }}
+        {{ render_static('js', 'https://cdnjs.cloudflare.com/ajax/libs/jsrender/1.0.2/jsrender.js', False) }}
+        {{ render_static('js', 'js/chatbot.js') }}
+    </body>
+</html>
