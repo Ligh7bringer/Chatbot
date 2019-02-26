@@ -86,7 +86,7 @@ function getBotResponse(rawText) {
         warn("Oops!", "It looks like you haven't a asked a question.");
         chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
     } else if(rawText.toLowerCase() === "alternate response") {
-        getAlternateResponse()
+        getAlternateResponse();
     } else {
         responseIdx = 0;
         // rawText = fixTypos(rawText, "en-us");
@@ -94,8 +94,9 @@ function getBotResponse(rawText) {
         appendChatMsg(rawText, true);
         $.get("/get", {msg: rawText}).done(function (data) {
             hideSpinner();
-            appendChatMsg(data, false, true);
-            $('pre code').each(function(i, e) {hljs.highlightBlock(e)});
+            feedback = rawText.toLowerCase() === "help" ? false : true;
+            appendChatMsg(data, false, feedback);
+            $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
         });
     }
 }

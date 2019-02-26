@@ -1,5 +1,6 @@
 body {
     font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+    height: 80vh;
 }
 
 a:not(.no-underline) {
