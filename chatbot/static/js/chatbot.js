@@ -1,60 +1,81 @@
-const userDiv = '<div class="p-3 mb-2 bg-info text-white rounded">';
-const botDiv = '<div id="botText" class="p-3 mb-2 bg-dark text-white rounded">';
-const loadDiv = '<div class="sk-three-bounce"><div class="sk-child sk-bounce1"></div><div class="sk-child sk-bounce2"></div>';                      'div class="sk-child sk-bounce3"></div></div>';
-const warningBegin = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
-const warningEnd = '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-                    '<span aria-hidden="true">&times;</span>' +
-                    '</button></div>';
-const noQuestions = '<strong>Oops!</strong> It looks like you haven\'t asked a question!';
-const noLastMsg = "<strong>Oops!</strong> Try asking a question first and then requesting an alternate answer.";
-const feedbackBtns = '<div class="row">' +
-                    '<div class="col-sm-4 my-auto"><strong>Was this answer helpful?</strong></div>' +
-                    '<div class="col-sm-6">' +
-                    '<div class="btn-group mr-2" role="group" aria-label="First group">' +
-                    '<button type="button" class="btn btn-success custom-button-width .navbar-right">Yes</button> </div>' +
-                    '<div class="btn-group mr-2" role="group" aria-label="First group">' +
-                    '<button type="button" class="btn btn-danger custom-button-width .navbar-right">No</button> </div>' +
-                    '</div>' +
-                    '</div></div>';
+// render static templates as they do 
+// not need to be re-rendered every time
+// they are used
+var spinnerTmpl = $.templates("#spinnerTmpl");
+var spinnerHtml = spinnerTmpl.render();
+var feedbackTmpl = $.templates('#feedbackTmpl');
+var feedbackHtml = feedbackTmpl.render();
 
-let chatbox =  $("#chatbox");
-let textInput = $("#textInput");
-let lastMsg = "";
-let responseIdx = 0;
+// preselect necessary divs
+var chatbox =  $("#chatbox");
+var textInput = $("#textInput");
+var lastMsg = "";
+var responseIdx = 0;
 
-function warn(body) {
-    let warning = warningBegin + body + warningEnd;
-    chatbox.append(warning);
-    window.setTimeout(function() {
-            $(".alert").fadeTo(500, 0).slideUp(500, function(){
-                $(this).remove();
-            });
-        }, 2000);
+// use different delimiters than jinja's
+// to avoid errors
+$.views.settings.delimiters("<%", "%>");
+
+function showSpinner() {
+    chatbox.append(spinnerHtml);
 }
 
-function appendUserMsg(rawText) {
-    const userHtml =  userDiv + rawText + '</div>';
+function hideSpinner() {
+    chatbox.children('.sk-three-bounce').remove();
+}
+
+function hideWarning() {
+    window.setTimeout(function() {
+        $(".alert").fadeTo(500, 0).slideUp(500, function(){
+            $(this).remove();
+        });
+    }, 2000);
+}
+
+function warn(title, message) {
     textInput.val("");
-    chatbox.append(userHtml);
+    data = {
+        title: title,
+        body: message
+    };
+    var warningTmpl = $.templates('#warningTmpl');
+    var warningHtml = warningTmpl.render(data);
+    chatbox.append(warningHtml);
+    hideWarning();
+}
+
+function appendChatMsg(text, user, feedback=false) {
+    textInput.val("");
+    var data = {text: text};
+    if(user) {
+        data.bg_col = "info";
+    } else {
+        data.bg_col = "dark";
+    }
+    var messageTmpl = $.templates('#messageTmpl');
+    var messageHtml = messageTmpl.render(data);
+    chatbox.append(messageHtml);
+    if(feedback) {
+        chatbox.children().last().append(feedbackHtml);
+    }
     chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
-    chatbox.append(loadDiv);
+    if(user)
+        showSpinner();
 }
 
 function getAlternateResponse() {
     if(lastMsg === "") {
-        warn(noLastMsg);
+        warn("Oops!", "It looks like you haven't asked any other questions yet.");
     } else {
-        appendUserMsg("alternate response");
+        appendChatMsg("alternate response", true);
         responseIdx++;
         if(responseIdx > 2) {
-            chatbox.children().last().remove();
-            let botHtml = botDiv + 'I don\'t know anything else about <i>"' + lastMsg + '"</i></div>.';
-            chatbox.append(botHtml);
+            hideSpinner();
+            chatbox.appendChatMsg("I don't know anything else about this", false);
         } else {
             $.get("/get", {msg: lastMsg, alt_response: responseIdx}).done(function (data) {
-                chatbox.children().last().remove();
-                const botHtml = botDiv + data + '</div>';
-                chatbox.append(botHtml);
+                hideSpinner();
+                appendChatMsg(data, false, true);
             });
         }
     }
@@ -62,35 +83,35 @@ function getAlternateResponse() {
 
 function getBotResponse(rawText) {
     if(rawText === "") {
-        warn(noQuestions);
+        warn("Oops!", "It looks like you haven't a asked a question.");
         chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
     } else if(rawText.toLowerCase() === "alternate response") {
-        getAlternateResponse()
+        getAlternateResponse();
     } else {
         responseIdx = 0;
-        rawText = fixTypos(rawText, "en-us");
+        // rawText = fixTypos(rawText, "en-us");
         lastMsg = rawText;
-        appendUserMsg(rawText);
+        appendChatMsg(rawText, true);
         $.get("/get", {msg: rawText}).done(function (data) {
-            const botHtml = botDiv + data + '<hr id="nine">' + feedbackBtns + '</div>';
-            chatbox.children().last().remove();
-            chatbox.append(botHtml);
-            $('pre code').each(function(i, e) {hljs.highlightBlock(e)});
+            hideSpinner();
+            feedback = rawText.toLowerCase() === "help" ? false : true;
+            appendChatMsg(data, false, feedback);
+            $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
         });
     }
 }
-
-textInput.keypress(function(e) {
-    let rawText = textInput.val();
-    if(e.which === 13) {
-        getBotResponse(rawText);
-    }
-});
 
 $(document).ready(function() {
     $("#buttonInput").click(function() {
         let rawText = textInput.val();
         getBotResponse(rawText);
+    });
+
+    textInput.keypress(function(e) {
+        let rawText = textInput.val();
+        if(e.which === 13) {
+            getBotResponse(rawText);
+        }
     });
 
     $('#helpLink').click(function () {

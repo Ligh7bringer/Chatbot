@@ -71,10 +71,7 @@ def parse_question(url, title, data):
         # for each answer found
         for i in range(0, end):
             # get the answer text
-            if SCRAPE_FORMATTING:
-                answer = answers[i].find('div', class_='post-text').extract()
-            else:
-                answer = answers[i].find('div', class_='post-text').get_text(separator='\n', strip=True)
+            answer = answers[i].find('div', class_='post-text').extract()
             # store the question and the answer in their own list
             answer = str(answer)
             entry = [title, answer]
