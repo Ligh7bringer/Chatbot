@@ -1,8 +1,9 @@
 body {
-    font-family: 'Ubuntu Mono', Helvetica, Arial, monospace;
+    font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+    height: 80vh;
 }
 
-a {
+a:not(.no-underline) {
     text-decoration:none;
     border-bottom: 2px solid #9b0e27;
     box-shadow: inset 0 -4px 0 #9b0e27;
@@ -10,7 +11,7 @@ a {
     transition: background 0.1s cubic-bezier(.33,.66,.66,1);
 }
 
-a:hover {
+a:hover:not(.no-underline) {
     color: inherit;
     text-decoration:none;
     background: #9b0e27;
@@ -36,12 +37,20 @@ h1 {
     width: 100%;
     height: 78vh;
     max-height: 78vh;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-x: hidden;
 }
 
 .force-to-bottom {
-    position:absolute;
+    position: absolute;
     bottom: 2%;
     width: 100%;
+}
+
+hr {
+    background: white;
+}
+
+.custom-button-width {
+	width:150px;
 }

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="row">
+        <div class="col h-100">
+            <div id="chatbox" class="border border-info rounded">
+                <div class="p-3 mb-2 bg-dark text-white rounded">
+                    Hi! Ask me a question. <br/>
+                    <b>Tip:</b> <i>You can ask for <b><a href="#" id="helpLink">help</a></b>
+                    or an <b>alternate response</b> to your last question</i>.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row force-to-bottom">
+        <div class="col">
+            <div class="input-group mb-3">
+                <input id="textInput" class="form-control" type="text" name="msg" placeholder="Ask your question here..." required>
+                <div class="input-group-append">
+                    <input id="buttonInput" class="btn btn-primary btn-md" type="submit" value="Send">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block templates %}
+    <script id="feedbackTmpl" type="text/x-jsrender">
+        <hr/>
+        <div class="row">
+            <div class="col-sm-4 my-auto">
+                <strong>Did this information answer your question?</strong>
+            </div>
+            <div class="col-sm-6">
+                <div class="btn-group mr-2" role="group" aria-label="First group">
+                    <button type="button" class="btn btn-success custom-button-width .navbar-right">Yes</button> 
+                </div>
+        
+                <div class="btn-group mr-2" role="group" aria-label="First group">
+                    <button type="button" class="btn btn-danger custom-button-width .navbar-right">No</button> 
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <script id="spinnerTmpl" type="text/x-jsrender">
+        <div class="sk-three-bounce">
+            <div class="sk-child sk-bounce1"></div>
+            <div class="sk-child sk-bounce2"></div>
+            <div class="sk-child sk-bounce3"></div>
+        </div>
+    </script>
+
+    <script id="warningTmpl" type="text/x-jsrender">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong><%:title%></strong> <%:body%>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </script>
+
+    <script id="messageTmpl" type="text/x-jsrender">
+        <div class="p-3 mb-2 bg-<%:bg_col%> text-white rounded">
+            <%:text%>
+        </div>
+    </script>
+    {% endblock %}
+{% endblock %}

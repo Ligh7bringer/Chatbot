@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="row justify-content-centre">
+        <div class="col text-center">
+            <p>A Chatbot which can answer question about C++.</p>
+            <p>The data used to train it is collected from StackOverflow.</p>
+        </div>
+    </div>
+    
+    <br/>
+
+    <div class="row justify-content-centre">
+        <div class="col text-center">
+            <h1>Help</h1>
+            <p>
+            You can type <b>help</b> to show this message.
+            </br> After you ask a question, you can type <b>alternate response</b>
+            to get another answer if the original one wasn't helpful.
+            </p>
+        </div>
+    </div>
+{% endblock %}
