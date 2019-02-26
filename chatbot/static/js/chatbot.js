@@ -76,6 +76,7 @@ function getAlternateResponse() {
             $.get("/get", {msg: lastMsg, alt_response: responseIdx}).done(function (data) {
                 hideSpinner();
                 appendChatMsg(data, false, true);
+                $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
             });
         }
     }
@@ -89,7 +90,6 @@ function getBotResponse(rawText) {
         getAlternateResponse();
     } else {
         responseIdx = 0;
-        // rawText = fixTypos(rawText, "en-us");
         lastMsg = rawText;
         appendChatMsg(rawText, true);
         $.get("/get", {msg: rawText}).done(function (data) {
@@ -102,6 +102,8 @@ function getBotResponse(rawText) {
 }
 
 $(document).ready(function() {
+    hljs.configure({languages: ['C', 'C++']});
+
     $("#buttonInput").click(function() {
         let rawText = textInput.val();
         getBotResponse(rawText);

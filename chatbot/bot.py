@@ -17,6 +17,9 @@ bot = ChatBot(
     read_only=True,
     # data will be stored in a database
     storage_adapter="chatterbot.storage.SQLStorageAdapter",
+    preprocessors=[
+        'chatterbot.preprocessors.unescape_html'
+    ],
     logic_adapters=[
         {
             'import_path':                  'chatbot.logic.best_match.BestMatch',
