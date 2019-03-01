@@ -27,17 +27,17 @@
     {% block templates %}
     <script id="feedbackTmpl" type="text/x-jsrender">
         <hr/>
-        <div class="row">
+        <div class="row row-id-<%:btn_id%>">
             <div class="col-sm-4 my-auto">
                 <strong>Did this information answer your question?</strong>
             </div>
             <div class="col-sm-6">
                 <div class="btn-group mr-2" role="group" aria-label="First group">
-                    <button type="button" class="btn btn-success custom-button-width .navbar-right">Yes</button> 
+                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'yes');" class="btn btn-success custom-button-width .navbar-right">Yes</button>
                 </div>
         
                 <div class="btn-group mr-2" role="group" aria-label="First group">
-                    <button type="button" class="btn btn-danger custom-button-width .navbar-right">No</button> 
+                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'no');" class="btn btn-danger custom-button-width .navbar-right">No</button>
                 </div>
             </div>
         </div>
@@ -64,6 +64,10 @@
         <div class="p-3 mb-2 bg-<%:bg_col%> text-white rounded">
             <%:text%>
         </div>
+    </script>
+
+    <script id="feedbackMsgTmpl" type="text/x-jsrender">
+        <strong>Thank you for the feedback!</strong>
     </script>
     {% endblock %}
 {% endblock %}

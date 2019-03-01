@@ -1,5 +1,6 @@
 from chatterbot.logic import LogicAdapter
 from chatterbot import filters
+from chatterbot.conversation import Statement
 
 
 class BestMatch(LogicAdapter):
@@ -12,14 +13,17 @@ class BestMatch(LogicAdapter):
     def process(self, input_statement, additional_response_selection_parameters=None):
         # if an alternate response is requested,
         # just return it from the list of cached responses
-        if input_statement.text.startswith("ALT_RESPONSE,"):
-            idx = int(input_statement.text[-1])
+        if input_statement.text.startswith("ALT_RESPONSE"):
+            try:
+                idx = int(input_statement.text[-1])
+            except ValueError:
+                return Statement("Something went wrong. Try asking again.")
             self.chatbot.logger.info("Alternate response requested, "
                                      "response {} from {} available.".format(idx, len(self.cached_responses)))
             if self.cached_responses is None:
-                return "Try asking a question first."
+                return Statement("Try asking a question first.")
             elif idx > len(self.cached_responses) - 1:
-                return "Sorry, I don't know anything else about this :("
+                return Statement("Sorry, I don't know anything else about this :(")
             else:
                 return self.cached_responses[idx]
 

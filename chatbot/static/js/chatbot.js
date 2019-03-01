@@ -3,14 +3,17 @@
 // they are used
 var spinnerTmpl = $.templates("#spinnerTmpl");
 var spinnerHtml = spinnerTmpl.render();
-var feedbackTmpl = $.templates('#feedbackTmpl');
-var feedbackHtml = feedbackTmpl.render();
+var feedbackMsgTmpl = $.templates("#feedbackMsgTmpl");
+var feedbackMsgHtml = feedbackMsgTmpl.render();
 
 // preselect necessary divs
 var chatbox =  $("#chatbox");
 var textInput = $("#textInput");
+
+// global variables
 var lastMsg = "";
 var responseIdx = 0;
+var btn_id = 0;
 
 // use different delimiters than jinja's
 // to avoid errors
@@ -34,7 +37,7 @@ function hideWarning() {
 
 function warn(title, message) {
     textInput.val("");
-    data = {
+    let data = {
         title: title,
         body: message
     };
@@ -46,16 +49,20 @@ function warn(title, message) {
 
 function appendChatMsg(text, user, feedback=false) {
     textInput.val("");
-    var data = {text: text};
-    if(user) {
-        data.bg_col = "info";
-    } else {
-        data.bg_col = "dark";
-    }
+    var data = {
+        "text": text,
+        "bg_col": user ? "info" : "dark"
+    };
     var messageTmpl = $.templates('#messageTmpl');
     var messageHtml = messageTmpl.render(data);
     chatbox.append(messageHtml);
     if(feedback) {
+        var feedbackTmpl = $.templates('#feedbackTmpl');
+        var feedbackData = {
+            "btn_id": btn_id
+        };
+        btn_id++;
+        var feedbackHtml = feedbackTmpl.render(feedbackData);
         chatbox.children().last().append(feedbackHtml);
     }
     chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
@@ -94,15 +101,23 @@ function getBotResponse(rawText) {
         appendChatMsg(rawText, true);
         $.get("/get", {msg: rawText}).done(function (data) {
             hideSpinner();
-            feedback = rawText.toLowerCase() === "help" ? false : true;
+            var feedback = rawText.toLowerCase() !== "help";
             appendChatMsg(data, false, feedback);
             $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
         });
     }
 }
 
+function getFeedback(id, feedback){
+    var div = $(id);
+    var parent = div.parent();
+    div.remove();
+    parent.append(feedbackMsgHtml);
+}
+
+
 $(document).ready(function() {
-    hljs.configure({languages: ['C', 'C++']});
+    hljs.configure({languages: ['C++', 'C']});
 
     $("#buttonInput").click(function() {
         let rawText = textInput.val();

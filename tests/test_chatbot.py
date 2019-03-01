@@ -2,17 +2,14 @@ import json
 from chatbot import bot
 from chatbot import constants
 
-"""
-Test whether the home page is accessible.
-"""
+
+# Test whether the home page is accessible.
 def test_home_page(test_client):
     result = test_client.get('/')
     assert result.status_code == 200
 
 
-"""
-Test whether the webhook returns the correct status codes.
-"""
+# Test whether the webhook returns the correct status codes.
 def test_webhook(test_client):
     result = test_client.post('/webhook',
                               data=json.dumps(dict(ref='refs/head/master')),
@@ -30,9 +27,7 @@ def test_webhook(test_client):
     assert result.status_code == 405 or result.status_code == 400
 
 
-"""
-Test whether the chatbot can respond.
-"""
+# Test whether the chatbot can respond.
 def test_bot_response(init_bot):
     question = "hi"
     response = bot.get_bot_response(question)
@@ -49,7 +44,7 @@ def test_help_response(init_bot):
 
 def test_alternate_response(init_bot):
     question = "Hello"
-    response = bot.get_bot_response(question)
+    bot.get_bot_response(question)
     alt_question = "ALT_RESPONSE, 1"
     response = bot.get_bot_response(alt_question)
 
@@ -58,5 +53,5 @@ def test_alternate_response(init_bot):
 
 def test_bot_get_request(test_client):
     result = test_client.get('/?msg=hi')
-    
+
     assert result.status_code == 200
