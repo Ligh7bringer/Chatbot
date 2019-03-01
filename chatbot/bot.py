@@ -1,4 +1,4 @@
-from chatterbot import ChatBot
+from chatterbot import ChatBot, filters
 from chatterbot.trainers import ChatterBotCorpusTrainer
 import click
 from flask.cli import with_appcontext
@@ -22,12 +22,12 @@ bot = ChatBot(
     ],
     logic_adapters=[
         {
-            'import_path':                  'chatbot.logic.best_match.BestMatch',
+            'import_path':                  'chatbot.logic.BestMatch',
             'default_response':             'I am sorry, but I do not understand.',
             'maximum_similarity_threshold':  0.90
         },
         {
-            'import_path':                  'chatbot.logic.specific_response.SpecificResponseAdapter',
+            'import_path':                  'chatbot.logic.SpecificResponseAdapter',
             'input_text':                   'Help',
             'output_text':                  BOT_HELP_MSG
         }
@@ -68,7 +68,6 @@ def del_db():
         os.remove(DB_FILE_PATH)
     except (FileNotFoundError, FileExistsError, OSError):
         print("File doesn't exist.")
-        pass
 
 
 def clean():
@@ -125,3 +124,4 @@ def init_app(app):
 # returns a response to a certain question
 def get_bot_response(question):
     return bot.get_response(question)
+

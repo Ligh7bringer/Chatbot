@@ -24,7 +24,7 @@ function showSpinner() {
 }
 
 function hideSpinner() {
-    chatbox.children('.sk-three-bounce').remove();
+    $('.sk-three-bounce').remove();
 }
 
 function hideWarning() {
@@ -65,9 +65,10 @@ function appendChatMsg(text, user, feedback=false) {
         var feedbackHtml = feedbackTmpl.render(feedbackData);
         chatbox.children().last().append(feedbackHtml);
     }
-    chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
-    if(user)
+    if(user) {
+        chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
         showSpinner();
+    }
 }
 
 function getAlternateResponse() {
@@ -78,7 +79,7 @@ function getAlternateResponse() {
         responseIdx++;
         if(responseIdx > 2) {
             hideSpinner();
-            chatbox.appendChatMsg("I don't know anything else about this", false);
+            appendChatMsg('I don\'t know anything else about <strong><i>' + lastMsg + '</i></strong>.', false);
         } else {
             $.get("/get", {msg: lastMsg, alt_response: responseIdx}).done(function (data) {
                 hideSpinner();
@@ -112,7 +113,11 @@ function getFeedback(id, feedback){
     var div = $(id);
     var parent = div.parent();
     div.remove();
-    parent.append(feedbackMsgHtml);
+    parent.append(spinnerHtml);
+    $.get("/get", {msg: "FEEDBACK", rating: feedback, question: lastMsg}).done(function (data) {
+        hideSpinner();
+        parent.append(feedbackMsgHtml);
+    });
 }
 
 

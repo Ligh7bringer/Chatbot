@@ -5,7 +5,6 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 import os
-import sys
 from chatbot.constants import CRAWLER_NUM_ANSWERS, DATA_DIR_PATH
 
 
@@ -46,15 +45,11 @@ def write_to_file(data):
     # initialise yaml library
     yaml = YAML()
     yaml.default_flow_style = False
-    # unicode doesn't work on Windows
-    # so disable it
-    if sys.platform == 'win32':
-        yaml.allow_unicode=False
     # create output file
     out_file = os.path.join(DATA_DIR_PATH, str(threading.get_ident()) + FILE_EXT)
     if VERBOSE_OUTPUT is True:
         print("Writing to", out_file)
-    with open(out_file, 'w+') as outfile:
+    with open(out_file, 'w+', encoding="utf-8") as outfile:
         yaml.dump(final_data, outfile)
 
 
@@ -139,6 +134,7 @@ def run(workers, num_pages, verbose):
     # number of threads
     workers = int(workers)
     func = partial(crawl_pages, num_pages)
+
     try:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             for i in range(workers):

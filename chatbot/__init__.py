@@ -6,9 +6,7 @@ from chatbot.config import Config
 from . import bot
 
 
-''' 
-Sets up the flask app.
-'''
+# Sets up the flask app.
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
@@ -26,7 +24,7 @@ def create_app(test_config=None):
 
     @app.route("/get")
     def get_bot_response():
-        user_text = request.args.get('msg')
+        message = request.args.get('msg')
         alt_idx = request.args.get('alt_response')
 
         if alt_idx is not None:
@@ -35,8 +33,12 @@ def create_app(test_config=None):
             app.logger.info(alt_question)
             return str(bot.get_bot_response(alt_question))
 
+        if message == "FEEDBACK":
+            app.logger.info("Feedback given")
+            return "OK"
+
         app.logger.info("RESPONSE REQUESTED")
-        return str(bot.get_bot_response(user_text))
+        return str(bot.get_bot_response(message))
 
     @app.route('/webhook', methods=['POST'])
     def webhook():
@@ -55,7 +57,7 @@ def create_app(test_config=None):
         return 'Invalid request type.', 400
 
     @app.route("/")
-    def test():
+    def home():
         return render_template("chatbot.html", title="Chatbot")
 
     @app.route("/about")
