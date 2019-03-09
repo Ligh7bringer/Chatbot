@@ -2,53 +2,44 @@ import requests
 from ruamel.yaml import YAML
 from bs4 import BeautifulSoup
 import threading
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import partial
-import os
-from chatbot.constants import CRAWLER_NUM_ANSWERS, DATA_DIR_PATH
+import logging
+from chatbot.constants import *
 
 
-headers = {
-    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/53.0.2785.143 Safari/537.36 '
-}
+to_clean = [" [duplicate]", " [closed]"]
 
-''' URLs '''
-# stack overflow
-SO_URL = 'http://stackoverflow.com/'
-# question tagged 'c++'
-BASE_URL = 'https://stackoverflow.com/questions/tagged/c%2b%2b'
-# sort by votes
-SORT = '?sort=votes'
-# current page
-PAGE = '&page='
-# how many questions per page
-PAGE_SIZE_URL = '&pageSize='
-''' --- '''
-# how many questions per page
-PAGE_SIZE = 10
-# how many answers to be scraped from every question
-NUM_ANSWERS = 3
-# results file name
-FILE_EXT = '.yaml'
-CATEGORIES = ["StackOverflow", "C++"]
-VERBOSE_OUTPUT = False
-SCRAPE_FORMATTING = True
+logger = logging.getLogger(__name__)
+
+
+def clean_title(title):
+    for word in to_clean:
+
+        if word in title:
+            logger.info(f"Found {word} in {title}. Cleaning...")
+            title = title.replace(word, "")
+
+        return title
 
 
 # writes the scraped data in yaml format in a file
 def write_to_file(data):
     final_data = dict(categories=CATEGORIES, conversations=data)
+
     # create output folder
     if not os.path.exists(DATA_DIR_PATH):
+        logger.warning(f"{DATA_DIR_PATH} does not exist. Creating it...")
         os.makedirs(DATA_DIR_PATH)
+
     # initialise yaml library
     yaml = YAML()
     yaml.default_flow_style = False
     # create output file
     out_file = os.path.join(DATA_DIR_PATH, str(threading.get_ident()) + FILE_EXT)
-    if VERBOSE_OUTPUT is True:
-        print("Writing to", out_file)
+
+    logger.info(f"Writing to {out_file}...")
+
     with open(out_file, 'w+', encoding="utf-8") as outfile:
         yaml.dump(final_data, outfile)
 
@@ -61,14 +52,18 @@ def parse_question(url, title, data):
     soup = BeautifulSoup(page.content, 'lxml')
     # get the question data, contained in a <div> with class "postcell"
     question = soup.find('div', class_='postcell')
+
     if question is not None:
+        title = clean_title(title)
         # the question text is stored at index 1
         # question = list(question)[1].get_text()
         answers = soup.find_all('div', class_='answercell')
         # limit to max 3 answers per question
         end = len(answers)
+
         if end > CRAWLER_NUM_ANSWERS:
             end = CRAWLER_NUM_ANSWERS
+
         # for each answer found
         for i in range(0, end):
             # get the answer text
@@ -87,6 +82,7 @@ def crawl_pages(num_pages, start):
     # define starting page
     current_page = start
     end = start + num_pages
+
     # while the target page hasn't been reached
     while current_page != end:
         try:
@@ -97,10 +93,10 @@ def crawl_pages(num_pages, start):
             # init bs4
             soup = BeautifulSoup(source_code, 'lxml')
             # print a message showing the url of the page being crawled
-            if VERBOSE_OUTPUT is True:
-                print('crawling page ' + str(current_page) + ': ' + page_url + '\n')
+            logger.info(f"Crawling page {current_page}: {page_url}")
             q_no = 0
             # get a link to each question
+
             for ques_link in soup.find_all('a', {'class': 'question-hyperlink'}):
                 # make sure no extra links are crawled
                 if q_no == PAGE_SIZE:
@@ -109,8 +105,7 @@ def crawl_pages(num_pages, start):
                 url = SO_URL + ques_link.get('href')
                 # print question title for debugging purposes
                 title = ques_link.get_text()
-                if VERBOSE_OUTPUT is True:
-                    print(title)
+                logger.info(title)
                 # parse this question
                 parse_question(url, title, data)
                 # keep track of current question number
@@ -122,24 +117,31 @@ def crawl_pages(num_pages, start):
             print("\nStopped by user!")
             break
     # print a message when done
-    print('\nDone crawling!')
+    # print('\nDone crawling!')
     write_to_file(data)
 
 
 def run(workers, num_pages, verbose):
-    global VERBOSE_OUTPUT
-    VERBOSE_OUTPUT = verbose
+    if verbose:
+        logger.setLevel(level=logging.INFO)
+    else:
+        logger.setLevel(level=logging.ERROR)
+
     # number of pages each thread will crawl
     num_pages = int(num_pages)
     # number of threads
     workers = int(workers)
+    futures = []
+
     func = partial(crawl_pages, num_pages)
 
     try:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             for i in range(workers):
-                executor.submit(func, (i * num_pages + 1))
+                futures.append(executor.submit(func, (i * num_pages + 1)))
     except (KeyboardInterrupt, EOFError, SystemExit):
-        print("Interrupted...")
+        for f in futures:
+            f.cancel()
+        print("Interrupted by user!")
 
-    print("\nDone crawling!")
+    print("\nDone!")

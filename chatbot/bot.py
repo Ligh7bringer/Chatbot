@@ -1,4 +1,4 @@
-from chatterbot import ChatBot, filters
+from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
 import click
 from flask.cli import with_appcontext
@@ -7,16 +7,17 @@ from chatbot.constants import *
 import logging
 
 
+cached_responses = []
 logging.basicConfig(level=logging.INFO)
-
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 # initialise chatbot
 bot = ChatBot(
     # name
     "C++ bot",
     read_only=True,
-    # data will be stored in a database
-    storage_adapter="chatterbot.storage.SQLStorageAdapter",
+    storage_adapter="chatbot.storage.SQLStorageAdapter",
     preprocessors=[
         'chatterbot.preprocessors.unescape_html'
     ],
@@ -31,7 +32,8 @@ bot = ChatBot(
             'input_text':                   'Help',
             'output_text':                  BOT_HELP_MSG
         }
-    ]
+    ],
+    database_uri='sqlite:///' + DB_FILE
 )
 
 
@@ -40,7 +42,7 @@ def get_files(loc):
     try:
         files = os.listdir(loc)
     except (FileNotFoundError, FileExistsError, OSError):
-        print(loc, "does not exist or is empty. Skipping...")
+        logger.warning("%s does not exist or is empty. Skipping...", loc)
 
     return files
 
@@ -56,7 +58,7 @@ def train():
     try:
         trainer.train("chatterbot.corpus.english.greetings")
     except (OSError, FileExistsError, FileNotFoundError):
-        print("Couldn't find chatterbot.corpus! Are you sure it's installed?")
+        logger.error("Couldn't find chatterbot-corpus! Are you sure it's installed?\n(pip install chatterbot-corpus)")
 
     files = get_files(DATA_DIR_PATH)
     for file in files:
@@ -66,8 +68,8 @@ def train():
 def del_db():
     try:
         os.remove(DB_FILE_PATH)
-    except (FileNotFoundError, FileExistsError, OSError):
-        print("File doesn't exist.")
+    except FileNotFoundError:
+        logger.warning("%s doesn't exist or is currently opened in another program.", DB_FILE_PATH)
 
 
 def clean():
@@ -75,38 +77,52 @@ def clean():
 
     for file in files:
         os.remove(os.path.join(DATA_DIR_PATH, file))
-    print("Deleted {} files from {}".format(len(files), DATA_DIR_PATH))
+    logger.info("Deleted {} files from {}".format(len(files), DATA_DIR_PATH))
     try:
         os.rmdir(DATA_DIR_PATH)
     except (FileNotFoundError, OSError):
-        print(DATA_DIR_PATH, "does not exist. Skipping.")
+        logger.info("%s does not exist. Skipping.", DATA_DIR_PATH)
+
+
+def abort_if_false(ctx, param, value):
+    if not value:
+        ctx.abort()
 
 
 # define command line commands
-@click.command('crawl')
-@click.option('-t', '--threads', default=3)
-@click.option('-p', '--pages', default=1)
-@click.option('-v', '--verbose', default=True)
+@click.command('crawl', help="Collect training data from Stack Overflow.")
+@click.option('-t', '--threads', default=3, help="Number of threads to be used when crawling.")
+@click.option('-p', '--pages', default=1, help="Number of pages to be crawled by each thread.")
+@click.option('-v', '--verbose', flag_value="True", help="Print more output.")
 @with_appcontext
 def crawl_command(threads, pages, verbose):
-    click.echo("\nCrawling with {} threads ({} pages per thread)\n".format(threads, pages))
+    # click.echo("Verbose output is {}.".format('on' if verbose else 'off'))
+    click.echo("\nCrawling with {} threads ({} pages per thread)...\n".format(threads, pages))
     collect_data(threads, pages, verbose)
 
 
-@click.command('train')
+@click.command('train', help="Train the chatbot with the data stored in /chatbot/training_data/")
 @with_appcontext
 def train_command():
     train()
 
 
-@click.command('del_db')
+@click.command('del_db', help="DELETE the database the chatbot uses.")
+@click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
+              expose_value=False,
+              prompt='Are you sure you want to delete the database?',
+              help="Don't show confirmation prompt.")
 @with_appcontext
 def del_command():
-    click.echo("\n\nWARNING: The chatbot database will be DELETED.")
+    # click.echo("\n\nWARNING: The chatbot database will be DELETED.")
     del_db()
 
 
-@click.command('clean')
+@click.command('clean', help="DELETE the training data stored in /chatbot/training_data/")
+@click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
+              expose_value=False,
+              prompt='Are you sure you want to delete the training data?',
+              help="Don't show confirmation prompt.")
 @with_appcontext
 def clean_command():
     clean()
@@ -123,5 +139,26 @@ def init_app(app):
 
 # returns a response to a certain question
 def get_bot_response(question):
-    return bot.get_response(question)
+    response = bot.get_response(question)
 
+    pair = (question, response)
+    cached_responses.append(pair)
+
+    return response
+
+
+def give_feedback(question, answer, rating):
+    found = None
+
+    for r in cached_responses:
+        logger.debug("{} == {} && {} == {}?".format(r[0], question, r[1], answer))
+
+        if r[0] == question and r[1].text == answer:
+            logger.debug("FOUND IT!")
+            found = r
+            break
+
+    if found is not None:
+        bot.storage.update_rating(found[0], found[1], rating)
+    else:
+        bot.logger.error("An error occurred when processing feedback: this response was not found in the cache.")

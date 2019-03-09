@@ -23,7 +23,7 @@ class BestMatch(LogicAdapter):
             if self.cached_responses is None:
                 return Statement("Try asking a question first.")
             elif idx > len(self.cached_responses) - 1:
-                return Statement("Sorry, I don't know anything else about this :(")
+                return Statement("Sorry, I don't know anything else about this.")
             else:
                 return self.cached_responses[idx]
 
@@ -56,7 +56,7 @@ class BestMatch(LogicAdapter):
         response_selection_parameters = {
             'search_in_response_to': closest_match.search_text,
             'exclude_text': recent_repeated_responses,
-            'exclude_text_words': self.excluded_words
+            'exclude_text_words': self.excluded_words,
         }
 
         alternate_response_selection_parameters = {
@@ -64,7 +64,7 @@ class BestMatch(LogicAdapter):
                 input_statement.text
             ),
             'exclude_text': recent_repeated_responses,
-            'exclude_text_words': self.excluded_words
+            'exclude_text_words': self.excluded_words,
         }
 
         if additional_response_selection_parameters:
@@ -114,6 +114,7 @@ class BestMatch(LogicAdapter):
             )
 
             response.confidence = closest_match.confidence
+            self.cached_responses = alternate_response_list
             self.chatbot.logger.info('Alternate response selected. Using "{}"'.format(response.text))
         else:
             response = self.get_default_response(input_statement)
@@ -122,15 +123,7 @@ class BestMatch(LogicAdapter):
 
 
 class SpecificResponseAdapter(LogicAdapter):
-    """
-    Return a specific response to a specific input.
-
-    :kwargs:
-        * *input_text* (``str``) --
-          The input text that triggers this logic adapter.
-        * *output_text* (``str``) --
-          The output text returned by this logic adapter.
-    """
+    # Return a specific response to a specific input.
 
     def __init__(self, chatbot, **kwargs):
         super().__init__(chatbot, **kwargs)

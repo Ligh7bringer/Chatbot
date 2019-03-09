@@ -11,9 +11,15 @@ var chatbox =  $("#chatbox");
 var textInput = $("#textInput");
 
 // global variables
-var lastMsg = "";
+var  lastQuestion = "";
+var lastAnswer = "";
 var responseIdx = 0;
 var btn_id = 0;
+var exclude_feedback = [
+    "Help".toLowerCase(),
+    "I am sorry, but I do not understand.".toLowerCase(),
+    "Sorry, I don't know anything else about this.".toLowerCase()
+];
 
 // use different delimiters than jinja's
 // to avoid errors
@@ -48,7 +54,6 @@ function warn(title, message) {
 }
 
 function appendChatMsg(text, user, feedback=false) {
-    textInput.val("");
     var data = {
         "text": text,
         "bg_col": user ? "info" : "dark"
@@ -68,25 +73,22 @@ function appendChatMsg(text, user, feedback=false) {
     if(user) {
         chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
         showSpinner();
+    } else {
+        lastAnswer = text;
     }
 }
 
 function getAlternateResponse() {
-    if(lastMsg === "") {
+    if(lastQuestion === "") {
         warn("Oops!", "It looks like you haven't asked any other questions yet.");
     } else {
         appendChatMsg("alternate response", true);
         responseIdx++;
-        if(responseIdx > 2) {
+        $.get("/get", {msg: lastQuestion, alt_response: responseIdx}).done(function (data) {
             hideSpinner();
-            appendChatMsg('I don\'t know anything else about <strong><i>' + lastMsg + '</i></strong>.', false);
-        } else {
-            $.get("/get", {msg: lastMsg, alt_response: responseIdx}).done(function (data) {
-                hideSpinner();
-                appendChatMsg(data, false, true);
-                $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
-            });
-        }
+            appendChatMsg(data, false, true);
+            $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
+        });
     }
 }
 
@@ -98,25 +100,25 @@ function getBotResponse(rawText) {
         getAlternateResponse();
     } else {
         responseIdx = 0;
-        lastMsg = rawText;
+        lastQuestion = rawText;
         appendChatMsg(rawText, true);
         $.get("/get", {msg: rawText}).done(function (data) {
             hideSpinner();
-            var feedback = rawText.toLowerCase() !== "help";
+            var feedback = !exclude_feedback.includes(rawText.toLowerCase().trim());
             appendChatMsg(data, false, feedback);
             $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
         });
     }
 }
 
-function getFeedback(id, feedback){
+function getFeedback(id, feedback) {
     var div = $(id);
     var parent = div.parent();
     div.remove();
     parent.append(spinnerHtml);
-    $.get("/get", {msg: "FEEDBACK", rating: feedback, question: lastMsg}).done(function (data) {
-        hideSpinner();
-        parent.append(feedbackMsgHtml);
+    $.get("/get", { msg: "FEEDBACK", rating: feedback, question: lastQuestion, answer: lastAnswer }).done(function (data) {
+            hideSpinner();
+            parent.append(feedbackMsgHtml);
     });
 }
 
@@ -126,12 +128,14 @@ $(document).ready(function() {
 
     $("#buttonInput").click(function() {
         let rawText = textInput.val();
+        textInput.val("");
         getBotResponse(rawText);
     });
 
     textInput.keypress(function(e) {
         let rawText = textInput.val();
         if(e.which === 13) {
+            textInput.val("");
             getBotResponse(rawText);
         }
     });

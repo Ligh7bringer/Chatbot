@@ -51,7 +51,26 @@ def test_alternate_response(init_bot):
     assert "greetings" in str(response).lower()
 
 
-def test_bot_get_request(test_client):
-    result = test_client.get('/?msg=hi')
+def test_feedback(init_bot):
+    expected = ["good", "fine", "ok"]
+    question = "how is it going?"
 
-    assert result.status_code == 200
+    for i in range(len(expected)):
+        response = bot.get_bot_response(question)
+        print(f"Expected: {expected[i]}, actual: {response} ")
+
+        assert expected[i] in str(response).lower()
+
+        bot.give_feedback(question, response.text, -1)
+
+
+def test_bot_get_request(test_client):
+    basic_msg = test_client.get('/', query_string={"msg": "hi"})
+    alt_response_msg = test_client.get('/', query_string={"msg": "hello", "alt_response": "1"})
+    feedback_msg = test_client.get('/', query_string={"msg": "FEEDBACK", "rating": "yes",
+                                                      "question": "hello", "answer": "hi"})
+
+    assert basic_msg.status_code == 200
+    assert alt_response_msg.status_code == 200
+    assert feedback_msg.status_code == 200
+

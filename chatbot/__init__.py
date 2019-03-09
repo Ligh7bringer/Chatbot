@@ -27,18 +27,30 @@ def create_app(test_config=None):
         message = request.args.get('msg')
         alt_idx = request.args.get('alt_response')
 
-        if alt_idx is not None:
+        if alt_idx is not None and message is not "FEEDBACK":
             alt_idx = int(alt_idx)
             alt_question = "ALT_RESPONSE, " + str(alt_idx)
-            app.logger.info(alt_question)
+            app.logger.info("Alternate response requested")
             return str(bot.get_bot_response(alt_question))
 
-        if message == "FEEDBACK":
-            app.logger.info("Feedback given")
+        elif message == "FEEDBACK" and alt_idx is None:
+            question = request.args.get('question')
+            answer = request.args.get('answer')
+            rating = request.args.get('rating')
+            if rating == 'yes':
+                value = 1
+            else:
+                value = -1
+            app.logger.info("Feedback given.")
+            bot.give_feedback(question, answer, value)
             return "OK"
 
-        app.logger.info("RESPONSE REQUESTED")
-        return str(bot.get_bot_response(message))
+        elif message is None:
+            return "Invalid request"
+
+        else:
+            app.logger.info("Regular response requested.")
+            return str(bot.get_bot_response(message))
 
     @app.route('/webhook', methods=['POST'])
     def webhook():
