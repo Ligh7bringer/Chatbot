@@ -1,5 +1,5 @@
 beautifulsoup4==4.7.1
-Bootstrap-Flask==1.0.9
+Bootstrap-Flask==1.0.10
 bs4==0.0.1
 ChatterBot==1.0.4
 chatterbot-corpus==1.2.0

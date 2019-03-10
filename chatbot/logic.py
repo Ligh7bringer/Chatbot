@@ -18,8 +18,10 @@ class BestMatch(LogicAdapter):
                 idx = int(input_statement.text[-1])
             except ValueError:
                 return Statement("Something went wrong. Try asking again.")
+
             self.chatbot.logger.info("Alternate response requested, "
                                      "response {} from {} available.".format(idx, len(self.cached_responses)))
+
             if self.cached_responses is None:
                 return Statement("Try asking a question first.")
             elif idx > len(self.cached_responses) - 1:

@@ -22,7 +22,7 @@ After installing the required libraries, your options are:
 
 
 
-- ```flask --help``` - show the available commands
+- ```flask --help``` - shows the available commands
 - ```flask crawl ``` - collects data from Stack Overflow which can be later used for training the bot (stored in **chatbot/training_data/**). Optional command line arguments are:
   - ``-t, --threads <number of threads to be used>``	
   - ``-p, --pages <number of pages to be crawled by each thread>``

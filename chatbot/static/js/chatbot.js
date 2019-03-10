@@ -15,10 +15,12 @@ var  lastQuestion = "";
 var lastAnswer = "";
 var responseIdx = 0;
 var btn_id = 0;
-var exclude_feedback = [
-    "Help".toLowerCase(),
-    "I am sorry, but I do not understand.".toLowerCase(),
-    "Sorry, I don't know anything else about this.".toLowerCase()
+var exclude_feedback_qs = [
+    "help"
+];
+var exclude_feedback_answers = [
+    "Sorry, I don't know anything else about this.".toLowerCase(),
+    "I am sorry, but I do not understand.".toLowerCase()
 ];
 
 // use different delimiters than jinja's
@@ -84,9 +86,11 @@ function getAlternateResponse() {
     } else {
         appendChatMsg("alternate response", true);
         responseIdx++;
+
         $.get("/get", {msg: lastQuestion, alt_response: responseIdx}).done(function (data) {
             hideSpinner();
-            appendChatMsg(data, false, true);
+            var fb_a = !exclude_feedback_answers.includes(data.toLowerCase().trim());
+            appendChatMsg(data, false, fb_a);
             $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
         });
     }
@@ -102,10 +106,13 @@ function getBotResponse(rawText) {
         responseIdx = 0;
         lastQuestion = rawText;
         appendChatMsg(rawText, true);
+
         $.get("/get", {msg: rawText}).done(function (data) {
             hideSpinner();
-            var feedback = !exclude_feedback.includes(rawText.toLowerCase().trim());
-            appendChatMsg(data, false, feedback);
+            var fb_q = !exclude_feedback_qs.includes(rawText.toLowerCase().trim());
+            var fb_a = !exclude_feedback_answers.includes(data.toLowerCase().trim());
+            console.log(data);
+            appendChatMsg(data, false, fb_q && fb_a);
             $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
         });
     }
@@ -116,6 +123,7 @@ function getFeedback(id, feedback) {
     var parent = div.parent();
     div.remove();
     parent.append(spinnerHtml);
+
     $.get("/get", { msg: "FEEDBACK", rating: feedback, question: lastQuestion, answer: lastAnswer }).done(function (data) {
             hideSpinner();
             parent.append(feedbackMsgHtml);
