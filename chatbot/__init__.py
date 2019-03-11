@@ -37,10 +37,12 @@ def create_app(test_config=None):
             question = request.args.get('question')
             answer = request.args.get('answer')
             rating = request.args.get('rating')
+
             if rating == 'yes':
                 value = 1
             else:
                 value = -1
+
             app.logger.info("Feedback given.")
             bot.give_feedback(question, answer, value)
             return "OK"

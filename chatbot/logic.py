@@ -137,14 +137,18 @@ class SpecificResponseAdapter(LogicAdapter):
         self.response_statement = Statement(text=output_text)
 
     def can_process(self, statement):
-        if statement.text == self.input_text:
+        # make the adapter case-insensitive
+        # e.g. if "HeLp" is the input statement
+        # the adapter should be able to process it
+        # as if it were "help"
+        if statement.text.lower() == self.input_text.lower():
             return True
 
         return False
 
     def process(self, statement, additional_response_selection_parameters=None):
 
-        if statement.text == self.input_text:
+        if statement.text.lower() == self.input_text.lower():
             self.response_statement.confidence = 1
         else:
             self.response_statement.confidence = 0

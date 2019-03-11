@@ -69,7 +69,9 @@ def del_db():
     try:
         os.remove(DB_FILE_PATH)
     except FileNotFoundError:
-        logger.warning("%s doesn't exist or is currently opened in another program.", DB_FILE_PATH)
+        logger.warning(f"{DB_FILE_PATH} does not exist.")
+    except PermissionError:
+        logger.warning(f"{DB_FILE_PATH} is open in another program and cannot be deleted.")
 
 
 def clean():
@@ -144,21 +146,10 @@ def get_bot_response(question):
     pair = (question, response)
     cached_responses.append(pair)
 
+    logger.info(response.created_at)
+
     return response
 
 
 def give_feedback(question, answer, rating):
-    found = None
-
-    for r in cached_responses:
-        logger.debug("{} == {} && {} == {}?".format(r[0], question, r[1], answer))
-
-        if r[0] == question and r[1].text == answer:
-            logger.debug("FOUND IT!")
-            found = r
-            break
-
-    if found is not None:
-        bot.storage.update_rating(found[0], found[1], rating)
-    else:
-        bot.logger.error("An error occurred when processing feedback: this response was not found in the cache.")
+    bot.storage.update_rating(question, answer, rating)

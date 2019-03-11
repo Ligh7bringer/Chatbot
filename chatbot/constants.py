@@ -10,8 +10,9 @@ DATA_DIR_PATH = os.path.join(FLASK_APP_ROOT, DATA_DIR)
 
 # Chatbot help message
 BOT_HELP_MSG = 'You can type <b>help</b> to show this message. ' \
-               '</br> After you ask a question, you can type <b>alternate response</b> ' \
-               'to get another answer if the original one wasn\'t helpful.'
+               '<br> After you ask a question, you can type <b>alternate response</b> ' \
+               'to get another answer if the original one wasn\'t helpful.' \
+               '<br> Giving feedback on answers helps the bot answer questions more accurately.'
 
 # Crawler constants:
 # how many answers to be scraped from every question

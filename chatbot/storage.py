@@ -1,4 +1,5 @@
 from chatterbot.storage import StorageAdapter
+from sqlalchemy import or_
 
 
 class SQLStorageAdapter(StorageAdapter):
@@ -116,6 +117,8 @@ class SQLStorageAdapter(StorageAdapter):
         exclude_text_words = kwargs.pop('exclude_text_words', [])
         persona_not_startswith = kwargs.pop('persona_not_startswith', None)
         search_text_contains = kwargs.pop('search_text_contains', None)
+        search_in_response_to_contains = kwargs.pop('search_in_response_to_contains', None)
+        answer = kwargs.pop('answer', None)
 
         # Convert a single sting into a list if only one tag is provided
         if type(tags) == str:
@@ -155,6 +158,11 @@ class SQLStorageAdapter(StorageAdapter):
             ]
             statements = statements.filter(
                 or_(*or_query)
+            )
+
+        if answer and search_in_response_to_contains:
+            statements = statements.filter(
+                Statement.text.contains(answer)
             )
 
         # if order_by:
@@ -373,19 +381,20 @@ class SQLStorageAdapter(StorageAdapter):
         finally:
             session.close()
 
-    def update_rating(self, question, response, rating):
+    def update_rating(self, question, answer, rating):
         session = self.Session()
         Statement = self.get_model('statement')
 
-        tagged = self.tagger.get_bigram_pair_string(question)
+        if question is not None and answer is not None:
+            record = session.query(Statement).filter(
+                Statement.text.contains(answer)
+            ).order_by(Statement.id.asc()).first()
 
-        if response is not None:
-            if response.id is None:
-                record = session.query(Statement).filter_by(text=response.text, search_in_response_to=tagged).first()
+            if record is not None:
+                self.logger.error(f"Updating rating for {record.id}")
+                record.rating += rating
+                session.add(record)
             else:
-                record = session.query(Statement).get(response.id)
-
-            record.rating += rating
-            session.add(record)
+                self.logger.error("Record couldn't be found in the database! Not updating rating...")
 
         self._session_finish(session)

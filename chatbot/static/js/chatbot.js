@@ -1,27 +1,30 @@
-// render static templates as they do 
+// render static templates as they do
 // not need to be re-rendered every time
 // they are used
-var spinnerTmpl = $.templates("#spinnerTmpl");
-var spinnerHtml = spinnerTmpl.render();
-var feedbackMsgTmpl = $.templates("#feedbackMsgTmpl");
-var feedbackMsgHtml = feedbackMsgTmpl.render();
+let spinnerTmpl = $.templates("#spinnerTmpl");
+let spinnerHtml = spinnerTmpl.render();
+let feedbackMsgTmpl = $.templates("#feedbackMsgTmpl");
+let feedbackMsgHtml = feedbackMsgTmpl.render();
 
 // preselect necessary divs
-var chatbox =  $("#chatbox");
-var textInput = $("#textInput");
+let chatbox =  $("#chatbox");
+let textInput = $("#textInput");
 
-// global variables
-var  lastQuestion = "";
-var lastAnswer = "";
-var responseIdx = 0;
-var btn_id = 0;
-var exclude_feedback_qs = [
+let exclude_feedback_qs = [
     "help"
 ];
-var exclude_feedback_answers = [
+let exclude_feedback_answers = [
     "Sorry, I don't know anything else about this.".toLowerCase(),
     "I am sorry, but I do not understand.".toLowerCase()
 ];
+
+// global variables
+let  lastQuestion = "";
+let lastAnswer = "";
+let responseIdx = 0;
+let btn_id = 0;
+
+let cache = [];
 
 // use different delimiters than jinja's
 // to avoid errors
@@ -49,29 +52,42 @@ function warn(title, message) {
         title: title,
         body: message
     };
-    var warningTmpl = $.templates('#warningTmpl');
-    var warningHtml = warningTmpl.render(data);
+
+    let warningTmpl = $.templates('#warningTmpl');
+    let warningHtml = warningTmpl.render(data);
     chatbox.append(warningHtml);
     hideWarning();
 }
 
+function sendRequest(data) {
+    // to do
+}
+
 function appendChatMsg(text, user, feedback=false) {
-    var data = {
+    let data = {
         "text": text,
         "bg_col": user ? "info" : "dark"
     };
-    var messageTmpl = $.templates('#messageTmpl');
-    var messageHtml = messageTmpl.render(data);
+
+    let messageTmpl = $.templates('#messageTmpl');
+    let messageHtml = messageTmpl.render(data);
+
     chatbox.append(messageHtml);
+
     if(feedback) {
-        var feedbackTmpl = $.templates('#feedbackTmpl');
-        var feedbackData = {
+        console.log("btn id: ", btn_id);
+
+        let feedbackTmpl = $.templates('#feedbackTmpl');
+        let feedbackData = {
             "btn_id": btn_id
         };
+
         btn_id++;
-        var feedbackHtml = feedbackTmpl.render(feedbackData);
+
+        let feedbackHtml = feedbackTmpl.render(feedbackData);
         chatbox.children().last().append(feedbackHtml);
     }
+
     if(user) {
         chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
         showSpinner();
@@ -89,8 +105,15 @@ function getAlternateResponse() {
 
         $.get("/get", {msg: lastQuestion, alt_response: responseIdx}).done(function (data) {
             hideSpinner();
-            var fb_a = !exclude_feedback_answers.includes(data.toLowerCase().trim());
+            let fb_a = !exclude_feedback_answers.includes(data.toLowerCase().trim());
+
             appendChatMsg(data, false, fb_a);
+
+            if(fb_a) {
+                cache.push([lastQuestion, data]);
+                console.log(cache);
+            }
+
             $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
         });
     }
@@ -109,27 +132,45 @@ function getBotResponse(rawText) {
 
         $.get("/get", {msg: rawText}).done(function (data) {
             hideSpinner();
-            var fb_q = !exclude_feedback_qs.includes(rawText.toLowerCase().trim());
-            var fb_a = !exclude_feedback_answers.includes(data.toLowerCase().trim());
-            console.log(data);
+
+            // can feedback be given for this question
+            let fb_q = !exclude_feedback_qs.includes(rawText.toLowerCase().trim());
+            // can feedback be given for this answer
+            let fb_a = !exclude_feedback_answers.includes(data.toLowerCase().trim());
+
             appendChatMsg(data, false, fb_q && fb_a);
+
+            if(fb_a) {
+                cache.push([rawText, data]);
+                console.log(cache);
+            }
+
             $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
         });
     }
 }
 
+// this function is called from the onClick property
+// of the buttons in chatbot.html
 function getFeedback(id, feedback) {
-    var div = $(id);
-    var parent = div.parent();
+    console.log(id);
+    let div = $(id);
+    let parent = div.parent();
+
     div.remove();
     parent.append(spinnerHtml);
 
-    $.get("/get", { msg: "FEEDBACK", rating: feedback, question: lastQuestion, answer: lastAnswer }).done(function (data) {
+    let idx = id[id.length-1];
+    let q = cache[idx][0];
+    let a = cache[idx][1];
+    console.log(idx, q, a);
+
+    $.get("/get",
+         { msg: "FEEDBACK", rating: feedback, question: q, answer: a }).done(function (data) {
             hideSpinner();
             parent.append(feedbackMsgHtml);
     });
 }
-
 
 $(document).ready(function() {
     hljs.configure({languages: ['C++', 'C']});
