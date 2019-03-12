@@ -117,8 +117,6 @@ class SQLStorageAdapter(StorageAdapter):
         exclude_text_words = kwargs.pop('exclude_text_words', [])
         persona_not_startswith = kwargs.pop('persona_not_startswith', None)
         search_text_contains = kwargs.pop('search_text_contains', None)
-        search_in_response_to_contains = kwargs.pop('search_in_response_to_contains', None)
-        answer = kwargs.pop('answer', None)
 
         # Convert a single sting into a list if only one tag is provided
         if type(tags) == str:
@@ -158,11 +156,6 @@ class SQLStorageAdapter(StorageAdapter):
             ]
             statements = statements.filter(
                 or_(*or_query)
-            )
-
-        if answer and search_in_response_to_contains:
-            statements = statements.filter(
-                Statement.text.contains(answer)
             )
 
         # if order_by:
@@ -277,13 +270,14 @@ class SQLStorageAdapter(StorageAdapter):
         session.add_all(create_statements)
         session.commit()
 
-    def update(self, statement):
+    def update(self, statement, **kwargs):
         """
         Modifies an entry in the database.
         Creates an entry if one does not exist.
         """
         Statement = self.get_model('statement')
         Tag = self.get_model('tag')
+        updated_text = kwargs.pop("updated_text", None)
 
         if statement is not None:
             session = self.Session()
@@ -311,6 +305,11 @@ class SQLStorageAdapter(StorageAdapter):
             record.created_at = statement.created_at
 
             record.search_text = self.tagger.get_bigram_pair_string(statement.text)
+
+            if updated_text:
+                self.logger.info(f"Updating text to {updated_text}")
+                record.text = updated_text
+                record.search_text = updated_text
 
             if statement.in_response_to:
                 record.search_in_response_to = self.tagger.get_bigram_pair_string(statement.in_response_to)

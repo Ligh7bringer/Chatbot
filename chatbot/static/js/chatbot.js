@@ -1,19 +1,16 @@
-// render static templates as they do
-// not need to be re-rendered every time
-// they are used
-let spinnerTmpl = $.templates("#spinnerTmpl");
-let spinnerHtml = spinnerTmpl.render();
-let feedbackMsgTmpl = $.templates("#feedbackMsgTmpl");
-let feedbackMsgHtml = feedbackMsgTmpl.render();
+// prerender the spinner template
+// as it doesn't change
+const spinnerTmpl = $.templates("#spinnerTmpl");
+const spinnerHtml = spinnerTmpl.render();
 
 // preselect necessary divs
 let chatbox =  $("#chatbox");
 let textInput = $("#textInput");
 
-let exclude_feedback_qs = [
+const exclude_feedback_qs = [
     "help"
 ];
-let exclude_feedback_answers = [
+const exclude_feedback_answers = [
     "Sorry, I don't know anything else about this.".toLowerCase(),
     "I am sorry, but I do not understand.".toLowerCase()
 ];
@@ -30,14 +27,17 @@ let cache = [];
 // to avoid errors
 $.views.settings.delimiters("<%", "%>");
 
+// shows the loading animation
 function showSpinner() {
     chatbox.append(spinnerHtml);
 }
 
+// hides the loading animation
 function hideSpinner() {
     $('.sk-three-bounce').remove();
 }
 
+// hides a warning message after 2 seconds
 function hideWarning() {
     window.setTimeout(function() {
         $(".alert").fadeTo(500, 0).slideUp(500, function(){
@@ -46,49 +46,50 @@ function hideWarning() {
     }, 2000);
 }
 
+// shows a warning message
 function warn(title, message) {
     textInput.val("");
+
     let data = {
         title: title,
         body: message
     };
 
-    let warningTmpl = $.templates('#warningTmpl');
-    let warningHtml = warningTmpl.render(data);
+    const warningTmpl = $.templates('#warningTmpl');
+    const warningHtml = warningTmpl.render(data);
     chatbox.append(warningHtml);
     hideWarning();
 }
 
-function sendRequest(data) {
-    // to do
-}
-
+// adds a user or bot message to the chatbox
 function appendChatMsg(text, user, feedback=false) {
-    let data = {
+    const data = {
         "text": text,
         "bg_col": user ? "info" : "dark"
     };
 
-    let messageTmpl = $.templates('#messageTmpl');
-    let messageHtml = messageTmpl.render(data);
+    const messageTmpl = $.templates('#messageTmpl');
+    const messageHtml = messageTmpl.render(data);
 
     chatbox.append(messageHtml);
 
     if(feedback) {
         console.log("btn id: ", btn_id);
 
-        let feedbackTmpl = $.templates('#feedbackTmpl');
-        let feedbackData = {
+        const feedbackTmpl = $.templates('#feedbackTmpl');
+        const feedbackData = {
             "btn_id": btn_id
         };
 
         btn_id++;
 
-        let feedbackHtml = feedbackTmpl.render(feedbackData);
+        const feedbackHtml = feedbackTmpl.render(feedbackData);
         chatbox.children().last().append(feedbackHtml);
     }
 
+    // if this is a message sent by the user
     if(user) {
+        // scroll down to it
         chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
         showSpinner();
     } else {
@@ -96,6 +97,30 @@ function appendChatMsg(text, user, feedback=false) {
     }
 }
 
+// sends a request to the backend program
+function sendRequest(data) {
+    $.get("/get", data).done(function (response) {
+            hideSpinner();
+
+            // can feedback be given for this question
+            const fb_q = !exclude_feedback_qs.includes(lastQuestion.toLowerCase().trim());
+            // can feedback be given for this answer
+            const fb_a = !exclude_feedback_answers.includes(response.toLowerCase().trim());
+
+            appendChatMsg(response, false, fb_q && fb_a);
+
+            if (fb_q && fb_a) {
+                cache.push([lastQuestion, response]);
+                console.log(cache);
+            }
+
+            $('pre code').each(function (i, e) {
+                hljs.highlightBlock(e)
+            });
+    });
+}
+
+// returns another response to the last question that was asked
 function getAlternateResponse() {
     if(lastQuestion === "") {
         warn("Oops!", "It looks like you haven't asked any other questions yet.");
@@ -103,22 +128,16 @@ function getAlternateResponse() {
         appendChatMsg("alternate response", true);
         responseIdx++;
 
-        $.get("/get", {msg: lastQuestion, alt_response: responseIdx}).done(function (data) {
-            hideSpinner();
-            let fb_a = !exclude_feedback_answers.includes(data.toLowerCase().trim());
+        const data = {
+            msg: lastQuestion,
+            alt_response: responseIdx,
+        };
 
-            appendChatMsg(data, false, fb_a);
-
-            if(fb_a) {
-                cache.push([lastQuestion, data]);
-                console.log(cache);
-            }
-
-            $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
-        });
+        sendRequest(data);
     }
 }
 
+// returns a response to the question the user asked
 function getBotResponse(rawText) {
     if(rawText === "") {
         warn("Oops!", "It looks like you haven't a asked a question.");
@@ -130,57 +149,59 @@ function getBotResponse(rawText) {
         lastQuestion = rawText;
         appendChatMsg(rawText, true);
 
-        $.get("/get", {msg: rawText}).done(function (data) {
-            hideSpinner();
-
-            // can feedback be given for this question
-            let fb_q = !exclude_feedback_qs.includes(rawText.toLowerCase().trim());
-            // can feedback be given for this answer
-            let fb_a = !exclude_feedback_answers.includes(data.toLowerCase().trim());
-
-            appendChatMsg(data, false, fb_q && fb_a);
-
-            if(fb_a) {
-                cache.push([rawText, data]);
-                console.log(cache);
-            }
-
-            $('pre code').each(function(i, e) { hljs.highlightBlock(e) });
-        });
+        const data = { msg: rawText };
+        sendRequest(data);
     }
 }
 
 // this function is called from the onClick property
 // of the buttons in chatbot.html
 function getFeedback(id, feedback) {
-    console.log(id);
     let div = $(id);
     let parent = div.parent();
 
     div.remove();
     parent.append(spinnerHtml);
 
-    let idx = id[id.length-1];
-    let q = cache[idx][0];
-    let a = cache[idx][1];
+    const idx = id[id.length-1];
+    const q = cache[idx][0];
+    const a = cache[idx][1];
     console.log(idx, q, a);
 
-    $.get("/get",
-         { msg: "FEEDBACK", rating: feedback, question: q, answer: a }).done(function (data) {
+    const requestBody = {
+        msg: "FEEDBACK",
+        rating: feedback,
+        question: q,
+        answer: a
+    };
+
+    const feedbackMsgTmpl = $.templates("#feedbackMsgTmpl");
+    let feedbackMsgHtml;
+    const feedback_no = feedback === 'no';
+    const template_data = {
+        "feedback_no": feedback_no
+    };
+
+    feedbackMsgHtml = feedbackMsgTmpl.render(template_data);
+
+    $.get("/get", requestBody).done(function (data) {
             hideSpinner();
             parent.append(feedbackMsgHtml);
     });
 }
 
+// executed when the page is fully loaded
 $(document).ready(function() {
     hljs.configure({languages: ['C++', 'C']});
 
+    // check if the Send button is clicked
     $("#buttonInput").click(function() {
         let rawText = textInput.val();
         textInput.val("");
         getBotResponse(rawText);
     });
 
+    // check if Enter is pressed in the text input
     textInput.keypress(function(e) {
         let rawText = textInput.val();
         if(e.which === 13) {
@@ -189,6 +210,7 @@ $(document).ready(function() {
         }
     });
 
+    // check if the help link is clicked
     $('#helpLink').click(function () {
         getBotResponse("Help");
     });

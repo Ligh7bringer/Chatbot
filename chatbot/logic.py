@@ -1,6 +1,7 @@
 from chatterbot.logic import LogicAdapter
 from chatterbot import filters
 from chatterbot.conversation import Statement
+from chatbot.constants import BOT_NO_MORE_ANSWERS
 
 
 class BestMatch(LogicAdapter):
@@ -25,7 +26,7 @@ class BestMatch(LogicAdapter):
             if self.cached_responses is None:
                 return Statement("Try asking a question first.")
             elif idx > len(self.cached_responses) - 1:
-                return Statement("Sorry, I don't know anything else about this.")
+                return Statement(BOT_NO_MORE_ANSWERS)
             else:
                 return self.cached_responses[idx]
 

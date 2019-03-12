@@ -1,3 +1,5 @@
+import stat
+
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
 import click
@@ -7,10 +9,11 @@ from chatbot.constants import *
 import logging
 
 
-cached_responses = []
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+cached_responses = []
 
 # initialise chatbot
 bot = ChatBot(
@@ -24,7 +27,7 @@ bot = ChatBot(
     logic_adapters=[
         {
             'import_path':                  'chatbot.logic.BestMatch',
-            'default_response':             'I am sorry, but I do not understand.',
+            'default_response':             BOT_NOT_UNDERSTAND,
             'maximum_similarity_threshold':  0.90
         },
         {
@@ -42,7 +45,7 @@ def get_files(loc):
     try:
         files = os.listdir(loc)
     except (FileNotFoundError, FileExistsError, OSError):
-        logger.warning("%s does not exist or is empty. Skipping...", loc)
+        logger.warning(f"{loc} does not exist or is empty. Skipping...")
 
     return files
 
@@ -58,7 +61,8 @@ def train():
     try:
         trainer.train("chatterbot.corpus.english.greetings")
     except (OSError, FileExistsError, FileNotFoundError):
-        logger.error("Couldn't find chatterbot-corpus! Are you sure it's installed?\n(pip install chatterbot-corpus)")
+        logger.error("Couldn't find chatterbot-corpus! Are you sure it's installed?\n"
+                     "(pip install chatterbot-corpus)")
 
     files = get_files(DATA_DIR_PATH)
     for file in files:
@@ -72,6 +76,8 @@ def del_db():
         logger.warning(f"{DB_FILE_PATH} does not exist.")
     except PermissionError:
         logger.warning(f"{DB_FILE_PATH} is open in another program and cannot be deleted.")
+        os.chmod(DB_FILE_PATH, stat.S_IWRITE)
+        os.remove(DB_FILE_PATH)
 
 
 def clean():
@@ -79,11 +85,11 @@ def clean():
 
     for file in files:
         os.remove(os.path.join(DATA_DIR_PATH, file))
-    logger.info("Deleted {} files from {}".format(len(files), DATA_DIR_PATH))
+    logger.info(f"Deleted {len(files)} files from {DATA_DIR_PATH}")
     try:
         os.rmdir(DATA_DIR_PATH)
     except (FileNotFoundError, OSError):
-        logger.info("%s does not exist. Skipping.", DATA_DIR_PATH)
+        logger.info(f"{DATA_DIR_PATH} does not exist. Skipping.")
 
 
 def abort_if_false(ctx, param, value):
@@ -99,7 +105,8 @@ def abort_if_false(ctx, param, value):
 @with_appcontext
 def crawl_command(threads, pages, verbose):
     # click.echo("Verbose output is {}.".format('on' if verbose else 'off'))
-    click.echo("\nCrawling with {} threads ({} pages per thread)...\n".format(threads, pages))
+    click.echo(f"\nUsing {threads} threads\n"
+               f"({pages} pages per thread)\n")
     collect_data(threads, pages, verbose)
 
 
@@ -112,7 +119,7 @@ def train_command():
 @click.command('del_db', help="DELETE the database the chatbot uses.")
 @click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
               expose_value=False,
-              prompt='Are you sure you want to delete the database?',
+              prompt='Are you sure you want to DELETE the database?',
               help="Don't show confirmation prompt.")
 @with_appcontext
 def del_command():
@@ -123,7 +130,7 @@ def del_command():
 @click.command('clean', help="DELETE the training data stored in /chatbot/training_data/")
 @click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
               expose_value=False,
-              prompt='Are you sure you want to delete the training data?',
+              prompt='Are you sure you want to DELETE the training data?',
               help="Don't show confirmation prompt.")
 @with_appcontext
 def clean_command():
@@ -145,8 +152,6 @@ def get_bot_response(question):
 
     pair = (question, response)
     cached_responses.append(pair)
-
-    logger.info(response.created_at)
 
     return response
 

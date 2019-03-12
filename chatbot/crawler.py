@@ -2,14 +2,13 @@ import requests
 from ruamel.yaml import YAML
 from bs4 import BeautifulSoup
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 import logging
 from chatbot.constants import *
 
 
 to_clean = [" [duplicate]", " [closed]"]
-
 logger = logging.getLogger(__name__)
 
 
@@ -84,7 +83,7 @@ def crawl_pages(num_pages, start):
     end = start + num_pages
 
     # while the target page hasn't been reached
-    while current_page != end:
+    for i in range(end):
         try:
             # generate url of the page to be crawled
             page_url = BASE_URL + SORT + PAGE + str(current_page) + PAGE_SIZE_URL + str(PAGE_SIZE)

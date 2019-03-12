@@ -1,11 +1,13 @@
 import json
-from chatbot import bot
 from chatbot import constants
 
 
 # Test whether the home page is accessible.
 def test_home_page(test_client):
     result = test_client.get('/')
+    assert result.status_code == 200
+
+    result = test_client.get('/about')
     assert result.status_code == 200
 
 
@@ -28,40 +30,45 @@ def test_webhook(test_client):
 
 
 # Test whether the chatbot can respond.
-def test_bot_response(init_bot):
+def test_bot_response(test_bot):
     question = "hi"
-    response = bot.get_bot_response(question)
+    response = test_bot.get_bot_response(question)
 
     assert "hello" or "hi" in str(response).lower()
 
+    question = "How to make an omelette?"
+    response = test_bot.get_bot_response(question)
+    assert constants.BOT_NOT_UNDERSTAND in str(response)
 
-def test_help_response(init_bot):
+
+def test_help_response(test_bot):
     help_question = "Help"
-    response = bot.get_bot_response(help_question)
+    response = test_bot.get_bot_response(help_question)
 
     assert constants.BOT_HELP_MSG in str(response)
 
 
-def test_alternate_response(init_bot):
-    question = "Hello"
-    bot.get_bot_response(question)
-    alt_question = "ALT_RESPONSE, 1"
-    response = bot.get_bot_response(alt_question)
-
+def test_alternate_response(test_bot):
+    test_bot.get_bot_response("Hello")
+    response = test_bot.get_bot_response("ALT_RESPONSE, 1")
     assert "greetings" in str(response).lower()
 
+    test_bot.get_bot_response("Hi")
+    response = test_bot.get_bot_response("ALT_RESPONSE, 1")
+    assert constants.BOT_NO_MORE_ANSWERS in str(response)
 
-def test_feedback(init_bot):
+
+def test_feedback(test_bot):
     expected = ["good", "fine", "ok"]
     question = "how is it going?"
 
     for i in range(len(expected)):
-        response = bot.get_bot_response(question)
+        response = test_bot.get_bot_response(question)
         print(f"Expected: {expected[i]}, actual: {response} ")
 
         assert expected[i] in str(response).lower()
 
-        bot.give_feedback(question, response.text, -1)
+        test_bot.give_feedback(question, response.text, -1)
 
 
 def test_bot_get_request(test_client):

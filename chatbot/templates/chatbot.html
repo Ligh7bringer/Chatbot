@@ -68,6 +68,9 @@
 
     <script id="feedbackMsgTmpl" type="text/x-jsrender">
         <strong>Thank you for the feedback!</strong>
+        <%if feedback_no%>
+            <br>Try asking for an <strong>alternate response</strong>.
+        <%/if%>
     </script>
     {% endblock %}
 {% endblock %}
