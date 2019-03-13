@@ -1,11 +1,10 @@
 import pytest
 from chatbot import create_app
 from chatbot import bot
+from chatbot.storage import SQLStorageAdapter
 
 
-"""
-Set up a test client so flask can be tested.
-"""
+# Set up a test client so flask can be tested.
 @pytest.fixture(scope='module')
 def test_client():
     flask_app = create_app()
@@ -22,11 +21,9 @@ def test_client():
     ctx.pop()
 
 
-"""
-Set up a test chatbot so that it can be tested.
-"""
+# Set up a test chatbot so that it can be tested.
 @pytest.fixture(scope='module')
-def init_bot():
+def test_bot():
     bot.collect_data(1, 1, False)
     bot.train()
 
@@ -35,3 +32,12 @@ def init_bot():
     bot.del_db()
     bot.clean()
 
+
+@pytest.fixture(scope='module')
+def test_adapter():
+    adapter = SQLStorageAdapter()
+    bot.train()
+
+    yield adapter
+
+    bot.del_db()

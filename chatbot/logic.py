@@ -1,5 +1,7 @@
 from chatterbot.logic import LogicAdapter
 from chatterbot import filters
+from chatterbot.conversation import Statement
+from chatbot.constants import BOT_NO_MORE_ANSWERS
 
 
 class BestMatch(LogicAdapter):
@@ -12,14 +14,19 @@ class BestMatch(LogicAdapter):
     def process(self, input_statement, additional_response_selection_parameters=None):
         # if an alternate response is requested,
         # just return it from the list of cached responses
-        if input_statement.text.startswith("ALT_RESPONSE,"):
-            idx = int(input_statement.text[-1])
+        if input_statement.text.startswith("ALT_RESPONSE"):
+            try:
+                idx = int(input_statement.text[-1])
+            except ValueError:
+                return Statement("Something went wrong. Try asking again.")
+
             self.chatbot.logger.info("Alternate response requested, "
                                      "response {} from {} available.".format(idx, len(self.cached_responses)))
+
             if self.cached_responses is None:
-                return "Try asking a question first."
+                return Statement("Try asking a question first.")
             elif idx > len(self.cached_responses) - 1:
-                return "Sorry, I don't know anything else about this :("
+                return Statement(BOT_NO_MORE_ANSWERS)
             else:
                 return self.cached_responses[idx]
 
@@ -52,7 +59,7 @@ class BestMatch(LogicAdapter):
         response_selection_parameters = {
             'search_in_response_to': closest_match.search_text,
             'exclude_text': recent_repeated_responses,
-            'exclude_text_words': self.excluded_words
+            'exclude_text_words': self.excluded_words,
         }
 
         alternate_response_selection_parameters = {
@@ -60,7 +67,7 @@ class BestMatch(LogicAdapter):
                 input_statement.text
             ),
             'exclude_text': recent_repeated_responses,
-            'exclude_text_words': self.excluded_words
+            'exclude_text_words': self.excluded_words,
         }
 
         if additional_response_selection_parameters:
@@ -110,8 +117,41 @@ class BestMatch(LogicAdapter):
             )
 
             response.confidence = closest_match.confidence
+            self.cached_responses = alternate_response_list
             self.chatbot.logger.info('Alternate response selected. Using "{}"'.format(response.text))
         else:
             response = self.get_default_response(input_statement)
 
         return response
+
+
+class SpecificResponseAdapter(LogicAdapter):
+    # Return a specific response to a specific input.
+
+    def __init__(self, chatbot, **kwargs):
+        super().__init__(chatbot, **kwargs)
+        from chatterbot.conversation import Statement
+
+        self.input_text = kwargs.get('input_text')
+
+        output_text = kwargs.get('output_text')
+        self.response_statement = Statement(text=output_text)
+
+    def can_process(self, statement):
+        # make the adapter case-insensitive
+        # e.g. if "HeLp" is the input statement
+        # the adapter should be able to process it
+        # as if it were "help"
+        if statement.text.lower() == self.input_text.lower():
+            return True
+
+        return False
+
+    def process(self, statement, additional_response_selection_parameters=None):
+
+        if statement.text.lower() == self.input_text.lower():
+            self.response_statement.confidence = 1
+        else:
+            self.response_statement.confidence = 0
+
+        return self.response_statement
