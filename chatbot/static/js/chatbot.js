@@ -126,12 +126,9 @@ function getAlternateResponse() {
         warn("Oops!", "It looks like you haven't asked any other questions yet.");
     } else {
         appendChatMsg("alternate response", true);
-        responseIdx++;
 
         const data = {
-            request_type: "alternate",
-            msg: lastQuestion,
-            alt_response: responseIdx,
+            request_type: "alternate"
         };
 
         sendRequest(data);
@@ -146,7 +143,6 @@ function getBotResponse(rawText) {
     } else if(rawText.toLowerCase() === "alternate response") {
         getAlternateResponse();
     } else {
-        responseIdx = 0;
         lastQuestion = rawText;
         appendChatMsg(rawText, true);
 

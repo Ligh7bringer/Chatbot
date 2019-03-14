@@ -50,11 +50,11 @@ def test_help_response(test_bot):
 
 def test_alternate_response(test_bot):
     test_bot.get_bot_response("Hello")
-    response = test_bot.get_bot_response("ALT_RESPONSE, 1")
+    response = test_bot.get_bot_response("ALT_RESPONSE")
     assert "greetings" in str(response).lower()
 
     test_bot.get_bot_response("Hi")
-    response = test_bot.get_bot_response("ALT_RESPONSE, 1")
+    response = test_bot.get_bot_response("ALT_RESPONSE")
     assert constants.BOT_NO_MORE_ANSWERS in str(response)
 
 
@@ -68,14 +68,14 @@ def test_feedback(test_bot):
 
         assert expected[i] in str(response).lower()
 
-        test_bot.give_feedback(question, response.text, -1)
+        test_bot.give_feedback(response.text, -1)
 
 
 def test_bot_get_request(test_client):
-    basic_msg = test_client.get('/', query_string={"msg": "hi"})
-    alt_response_msg = test_client.get('/', query_string={"msg": "hello", "alt_response": "1"})
-    feedback_msg = test_client.get('/', query_string={"msg": "FEEDBACK", "rating": "yes",
-                                                      "question": "hello", "answer": "hi"})
+    basic_msg = test_client.get('/', query_string={"type": "regular", "msg": "hi"})
+    alt_response_msg = test_client.get('/', query_string={"type": "alternate", "msg": "hello"})
+    feedback_msg = test_client.get('/', query_string={"type": "feedback", "rating": "yes",
+                                                      "answer": "hi"})
 
     assert basic_msg.status_code == 200
     assert alt_response_msg.status_code == 200

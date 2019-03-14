@@ -26,14 +26,11 @@ def create_app(test_config=None):
     def get_bot_response():
         # get the request type
         request_type = request.args.get('request_type')
-        # get the message (if there is one)
-        message = request.args.get('msg')
-
-        app.logger.info(f"Request type: {request_type}.")
+        app.logger.info(f"Request of type {request_type} received.")
 
         if request_type == "alternate":
-            alt_idx = int(request.args.get('alt_response'))
-            alt_question = "ALT_RESPONSE, " + str(alt_idx)
+            # alt_idx = int(request.args.get('alt_response'))
+            alt_question = "ALT_RESPONSE"
             app.logger.info("Alternate response requested.")
 
             return str(bot.get_bot_response(alt_question))
@@ -48,6 +45,8 @@ def create_app(test_config=None):
 
         if request_type == "regular":
             app.logger.info("Regular response requested.")
+            # get the message
+            message = request.args.get('msg')
 
             return str(bot.get_bot_response(message))
 
