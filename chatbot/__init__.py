@@ -24,35 +24,36 @@ def create_app(test_config=None):
 
     @app.route("/get")
     def get_bot_response():
+        # get the request type
+        request_type = request.args.get('request_type')
+        # get the message (if there is one)
         message = request.args.get('msg')
-        alt_idx = request.args.get('alt_response')
 
-        if alt_idx is not None and message is not "FEEDBACK":
-            alt_idx = int(alt_idx)
+        app.logger.info(f"Request type: {request_type}.")
+
+        if request_type == "alternate":
+            alt_idx = int(request.args.get('alt_response'))
             alt_question = "ALT_RESPONSE, " + str(alt_idx)
-            app.logger.info("Alternate response requested")
+            app.logger.info("Alternate response requested.")
+
             return str(bot.get_bot_response(alt_question))
 
-        elif message == "FEEDBACK" and alt_idx is None:
-            question = request.args.get('question')
+        if request_type == "feedback":
             answer = request.args.get('answer')
-            rating = request.args.get('rating')
-
-            if rating == 'yes':
-                value = 1
-            else:
-                value = -1
-
+            feedback = request.args.get('rating')
             app.logger.info("Feedback given.")
-            bot.give_feedback(question, answer, value)
+
+            bot.give_feedback(answer, feedback)
             return "OK"
 
-        elif message is None:
-            return "Invalid request"
-
-        else:
+        if request_type == "regular":
             app.logger.info("Regular response requested.")
+
             return str(bot.get_bot_response(message))
+
+        # if this code is reached,
+        # the request type was invalid
+        return "Invalid request"
 
     @app.route('/webhook', methods=['POST'])
     def webhook():

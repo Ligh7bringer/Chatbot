@@ -16,7 +16,7 @@ def clean_title(title):
     for word in to_clean:
 
         if word in title:
-            logger.info(f"Found {word} in {title}. Cleaning...")
+            logger.debug(f"Found {word} in {title}. Cleaning...")
             title = title.replace(word, "")
 
         return title
@@ -83,7 +83,7 @@ def crawl_pages(num_pages, start):
     end = start + num_pages
 
     # while the target page hasn't been reached
-    for i in range(end):
+    while current_page != end:
         try:
             # generate url of the page to be crawled
             page_url = BASE_URL + SORT + PAGE + str(current_page) + PAGE_SIZE_URL + str(PAGE_SIZE)
@@ -95,7 +95,6 @@ def crawl_pages(num_pages, start):
             logger.info(f"Crawling page {current_page}: {page_url}")
             q_no = 0
             # get a link to each question
-
             for ques_link in soup.find_all('a', {'class': 'question-hyperlink'}):
                 # make sure no extra links are crawled
                 if q_no == PAGE_SIZE:
@@ -104,7 +103,7 @@ def crawl_pages(num_pages, start):
                 url = SO_URL + ques_link.get('href')
                 # print question title for debugging purposes
                 title = ques_link.get_text()
-                logger.info(title)
+                logger.debug(title)
                 # parse this question
                 parse_question(url, title, data)
                 # keep track of current question number
@@ -113,7 +112,7 @@ def crawl_pages(num_pages, start):
             current_page += 1
         # catch some exceptions
         except (KeyboardInterrupt, EOFError, SystemExit):
-            print("\nStopped by user!")
+            print("Aborted!")
             break
     # print a message when done
     # print('\nDone crawling!')
@@ -122,25 +121,22 @@ def crawl_pages(num_pages, start):
 
 def run(workers, num_pages, verbose):
     if verbose:
-        logger.setLevel(level=logging.INFO)
+        logger.setLevel(level=logging.DEBUG)
     else:
-        logger.setLevel(level=logging.ERROR)
+        logger.setLevel(level=logging.INFO)
 
     # number of pages each thread will crawl
     num_pages = int(num_pages)
     # number of threads
     workers = int(workers)
-    futures = []
 
     func = partial(crawl_pages, num_pages)
 
     try:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             for i in range(workers):
-                futures.append(executor.submit(func, (i * num_pages + 1)))
+                executor.submit(func, (i * num_pages + 1))
     except (KeyboardInterrupt, EOFError, SystemExit):
-        for f in futures:
-            f.cancel()
-        print("Interrupted by user!")
+        logger.warning("Aborted!")
 
-    print("\nDone!")
+    logger.info("Done!")

@@ -129,6 +129,7 @@ function getAlternateResponse() {
         responseIdx++;
 
         const data = {
+            request_type: "alternate",
             msg: lastQuestion,
             alt_response: responseIdx,
         };
@@ -149,7 +150,10 @@ function getBotResponse(rawText) {
         lastQuestion = rawText;
         appendChatMsg(rawText, true);
 
-        const data = { msg: rawText };
+        const data = {
+            request_type: "regular",
+            msg: rawText
+        };
         sendRequest(data);
     }
 }
@@ -169,9 +173,8 @@ function getFeedback(id, feedback) {
     console.log(idx, q, a);
 
     const requestBody = {
-        msg: "FEEDBACK",
+        request_type: "feedback",
         rating: feedback,
-        question: q,
         answer: a
     };
 

@@ -9,13 +9,16 @@ DATA_DIR = "training_data"
 DATA_DIR_PATH = os.path.join(FLASK_APP_ROOT, DATA_DIR)
 
 # Chatbot help message
-BOT_HELP_MSG = 'You can type <b>help</b> to show this message. ' \
-               '<br> After you ask a question, you can type <b>alternate response</b> ' \
-               'to get another answer if the original one wasn\'t helpful.' \
-               '<br> Giving feedback on answers helps the bot answer questions more accurately.'
+BOT_HELP_MSG = '<ul>' \
+               '<li>You can type <b>help</b> to show this message. </li>' \
+               '<li> After you ask a question, you can type <b>alternate response</b> ' \
+               'to get another answer if the original one wasn\'t helpful.</li>' \
+               '<li> Giving feedback on answers helps the bot answer questions more accurately.</li>' \
+               '</ul>'
 
 BOT_NOT_UNDERSTAND = "I am sorry, but I do not understand."
 BOT_NO_MORE_ANSWERS = "Sorry, I don't know anything else about this."
+BOT_NO_QUESTION = "You haven't asked any questions."
 
 # Crawler constants:
 # how many answers to be scraped from every question

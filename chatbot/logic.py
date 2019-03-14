@@ -1,7 +1,7 @@
 from chatterbot.logic import LogicAdapter
 from chatterbot import filters
 from chatterbot.conversation import Statement
-from chatbot.constants import BOT_NO_MORE_ANSWERS
+from chatbot.constants import BOT_NO_MORE_ANSWERS, BOT_NO_QUESTION
 
 
 class BestMatch(LogicAdapter):
@@ -15,20 +15,27 @@ class BestMatch(LogicAdapter):
         # if an alternate response is requested,
         # just return it from the list of cached responses
         if input_statement.text.startswith("ALT_RESPONSE"):
-            try:
-                idx = int(input_statement.text[-1])
-            except ValueError:
-                return Statement("Something went wrong. Try asking again.")
+            self.chatbot.logger.info(f"Alternate response requested. "
+                                     f"Currently there are {len(self.cached_responses)} cached responses.")
 
-            self.chatbot.logger.info("Alternate response requested, "
-                                     "response {} from {} available.".format(idx, len(self.cached_responses)))
-
+            # if there are no cached responses,
             if self.cached_responses is None:
-                return Statement("Try asking a question first.")
-            elif idx > len(self.cached_responses) - 1:
-                return Statement(BOT_NO_MORE_ANSWERS)
+                # the user hasn't asked a question
+                return Statement(BOT_NO_QUESTION)
+            # if there are,
             else:
-                return self.cached_responses[idx]
+                # a response from the list can be returned
+                # pop() removes it from the list
+                try:
+                    # the original response is stored at index 0
+                    # the alternate responses start at index 1
+                    return self.cached_responses.pop(1)
+                # this exception is raised when there are no responses
+                # at index 1 of the cache
+                except IndexError:
+                    # therefore there are no more known responses.
+                    # let the user know
+                    return Statement(BOT_NO_MORE_ANSWERS)
 
         search_results = self.search_algorithm.search(input_statement)
 
