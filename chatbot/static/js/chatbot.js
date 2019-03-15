@@ -143,7 +143,7 @@ function getBotResponse(rawText) {
     } else if(rawText.toLowerCase() === "alternate response") {
         getAlternateResponse();
     } else {
-        lastQuestion = rawText;
+            lastQuestion = rawText;
         appendChatMsg(rawText, true);
 
         const data = {

@@ -29,7 +29,6 @@ def create_app(test_config=None):
         app.logger.info(f"Request of type {request_type} received.")
 
         if request_type == "alternate":
-            # alt_idx = int(request.args.get('alt_response'))
             alt_question = "ALT_RESPONSE"
             app.logger.info("Alternate response requested.")
 
@@ -59,11 +58,17 @@ def create_app(test_config=None):
         if request.method == 'POST':
             data = request.get_json()
             branch = str(data.get('ref'))
+
             if branch == 'refs/heads/master':
-                repo = git.Repo(os.getcwd())
-                origin = repo.remotes.origin
-                repo.create_head('master', origin.refs.master).set_tracking_branch(origin.refs.master).checkout()
-                origin.pull()
+                testing = request.get_json('test')
+
+                if testing is None:
+                    repo = git.Repo(os.getcwd())
+                    origin = repo.remotes.origin
+                    repo.create_head('master', origin.refs.master).set_tracking_branch(
+                        origin.refs.master
+                    ).checkout()
+                    origin.pull()
                 return 'Pulling from master...', 200
             else:
                 return 'Ignoring request, branch is not master.', 200

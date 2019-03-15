@@ -390,7 +390,7 @@ class SQLStorageAdapter(StorageAdapter):
             ).order_by(Statement.id.asc()).first()
 
             if record is not None:
-                self.logger.error(f"Updating rating for {record.id}...")
+                self.logger.info(f"Updating rating for {record.id}...")
                 record.rating += rating
                 session.add(record)
             else:

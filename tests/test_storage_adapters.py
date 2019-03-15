@@ -1,5 +1,4 @@
 from chatterbot.conversation import Statement
-from chatterbot.trainers import ListTrainer
 
 
 def test_db_count(test_adapter):
@@ -81,3 +80,4 @@ def test_create_many(test_adapter):
     test_adapter.create_many(statements)
 
     assert test_adapter.count() == len(statements) + count
+
