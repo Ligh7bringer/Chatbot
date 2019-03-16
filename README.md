@@ -1,6 +1,10 @@
 # :zap: Honours Project 2018 - 2019 :zap:
 A chatbot which can answer C++ questions based on data collected from [Stack Overflow](https://stackoverflow.com/questions/tagged/c%2b%2b?sort=votes&pageSize=15).
 
+# Demo
+
+There is a live demo of the project at [https://ligh7bringer.pythonanywhere.com/](https://ligh7bringer.pythonanywhere.com/).
+
 # Repo Status
 | **Branch**      | **CI**                                                       | **Code coverage**                                            | **Requirements**                                             | **Maintainability**                                          |
 |-----------------|---|---|---|---|

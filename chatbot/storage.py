@@ -380,17 +380,17 @@ class SQLStorageAdapter(StorageAdapter):
         finally:
             session.close()
 
-    def update_rating(self, question, answer, rating):
+    def update_rating(self, answer, rating):
         session = self.Session()
         Statement = self.get_model('statement')
 
-        if question is not None and answer is not None:
+        if answer is not None:
             record = session.query(Statement).filter(
                 Statement.text.contains(answer)
             ).order_by(Statement.id.asc()).first()
 
             if record is not None:
-                self.logger.error(f"Updating rating for {record.id}")
+                self.logger.info(f"Updating rating for {record.id}...")
                 record.rating += rating
                 session.add(record)
             else:

@@ -156,5 +156,10 @@ def get_bot_response(question):
     return response
 
 
-def give_feedback(question, answer, rating):
-    bot.storage.update_rating(question, answer, rating)
+def give_feedback(answer, feedback):
+    if feedback is 'yes':
+        value = 1
+    else:
+        value = -1
+
+    bot.storage.update_rating(answer, value)

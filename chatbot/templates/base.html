@@ -9,7 +9,7 @@
         {{ render_static('css', 'css/style.css') }}
         {{ render_static('css', 'css/spinkit.css') }}
         {{ render_static('css', 'https://fonts.googleapis.com/css?family=Ubuntu+Mono', False) }}
-        {{ render_static('css', 'css/hjs.css') }}
+        {{ render_static('css', 'css/github.css') }}
         {{ render_static('js', 'js/highlight.pack.js') }}
 
         <title>{{ title }}</title>
@@ -17,9 +17,9 @@
 
     <body>
         {% block content %}
-        <div class="container-fluid">
+        <div class="container-fluid d-flex h-100 flex-column bg-light">
             {% if title %}
-                <h1>{{ title }}</h1>
+                <div class="page-title">{{ title }}</div>
             {% endif %}
 
         {% block app_content %}
