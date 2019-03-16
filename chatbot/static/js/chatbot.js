@@ -18,7 +18,6 @@ const exclude_feedback_answers = [
 // global variables
 let  lastQuestion = "";
 let lastAnswer = "";
-let responseIdx = 0;
 let btn_id = 0;
 
 let cache = [];
@@ -26,6 +25,14 @@ let cache = [];
 // use different delimiters than jinja's
 // to avoid errors
 $.views.settings.delimiters("<%", "%>");
+
+String.prototype.isEmpty = String.prototype.isEmpty || function() {
+   return !(!!this.trim().length);
+}
+
+function resizeImages() {
+   $('img').addClass('img-fluid');
+}
 
 // shows the loading animation
 function showSpinner() {
@@ -43,7 +50,7 @@ function hideWarning() {
         $(".alert").fadeTo(500, 0).slideUp(500, function(){
             $(this).remove();
         });
-    }, 2000);
+    }, 2500);
 }
 
 // shows a warning message
@@ -114,6 +121,7 @@ function sendRequest(data) {
                 console.log(cache);
             }
 
+            resizeImages();
             $('pre code').each(function (i, e) {
                 hljs.highlightBlock(e)
             });
@@ -122,7 +130,7 @@ function sendRequest(data) {
 
 // returns another response to the last question that was asked
 function getAlternateResponse() {
-    if(lastQuestion === "") {
+    if(!lastQuestion) {
         warn("Oops!", "It looks like you haven't asked any other questions yet.");
     } else {
         appendChatMsg("alternate response", true);
@@ -137,13 +145,13 @@ function getAlternateResponse() {
 
 // returns a response to the question the user asked
 function getBotResponse(rawText) {
-    if(rawText === "") {
+    if(rawText.isEmpty()) {
         warn("Oops!", "It looks like you haven't a asked a question.");
         chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
     } else if(rawText.toLowerCase() === "alternate response") {
         getAlternateResponse();
     } else {
-            lastQuestion = rawText;
+        lastQuestion = rawText;
         appendChatMsg(rawText, true);
 
         const data = {
@@ -191,7 +199,7 @@ function getFeedback(id, feedback) {
 
 // executed when the page is fully loaded
 $(document).ready(function() {
-    hljs.configure({languages: ['C++', 'C']});
+    // hljs.configure({languages: ['C++', 'C']});
 
     // check if the Send button is clicked
     $("#buttonInput").click(function() {

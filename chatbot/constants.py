@@ -13,7 +13,7 @@ BOT_HELP_MSG = '<ul>' \
                '<li>You can type <b>help</b> to show this message. </li>' \
                '<li> After you ask a question, you can type <b>alternate response</b> ' \
                'to get another answer if the original one wasn\'t helpful.</li>' \
-               '<li> Giving feedback on answers helps the bot answer questions more accurately.</li>' \
+               '<li> Giving feedback for answers helps the bot answer questions more accurately.</li>' \
                '</ul>'
 
 BOT_NOT_UNDERSTAND = "I am sorry, but I do not understand."

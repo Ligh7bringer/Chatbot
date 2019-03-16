@@ -2,18 +2,18 @@
 
 {% block app_content %}
     <div class="row">
-        <div class="col h-100">
-            <div id="chatbox" class="border border-info rounded">
+        <div class="col h-100 flex-fill d-flex">
+            <div id="chatbox" class="border border-secondary rounded">
                 <div class="p-3 mb-2 bg-dark text-white rounded">
                     Hi! Ask me a question. <br/>
-                    <b>Tip:</b> <i>You can ask for <b><a href="#" id="helpLink">help</a></b>
-                    or an <b>alternate response</b> to your last question</i>.
+                    <br><b>Tip:</b> <i>You can ask me for help by typing "help" in the chat or clicking <a href="#" id="helpLink">this</a> link.
+                    <br>You can also ask for an <b>alternate response</b> to your last question</i>.
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row force-to-bottom">
+    <div class="row force-to-bottom flex-shrink-0">
         <div class="col">
             <div class="input-group mb-3">
                 <input id="textInput" class="form-control" type="text" name="msg" placeholder="Ask your question here..." required>
