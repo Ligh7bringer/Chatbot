@@ -1,13 +1,23 @@
 {% from 'bootstrap/utils.html' import render_static %}
 
+{% set navigation_bar = [
+            ('/', 'home', 'Home', 'fas fa-home'),
+            ('#', 'help', 'Help', 'fas fa-question-circle'),
+            ('/about', 'about', 'About', 'fas fa-info-circle')
+    ] -%}
+
+{% set active_page = active_page|default('index') -%}
+
+<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
         {{ render_static('icon', 'favicon.ico') }}
-        {{ bootstrap.load_css() }}
+        {{ render_static('css', 'css/bootstrap.min.css') }}
         {{ render_static('css', 'css/style.css') }}
         {{ render_static('css', 'css/spinkit.css') }}
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
         {{ render_static('css', 'https://fonts.googleapis.com/css?family=Ubuntu+Mono', False) }}
         {{ render_static('css', 'css/github.css') }}
         {{ render_static('js', 'js/highlight.pack.js') }}
@@ -17,10 +27,44 @@
 
     <body>
         {% block content %}
-        <div class="container-fluid d-flex h-100 flex-column bg-light">
-            {% if title %}
-                <div class="page-title">{{ title }}</div>
-            {% endif %}
+        <div class="container-fluid h-100 d-flex flex-column">
+
+        {% block navigation %}
+        <nav class="navbar navbar-expand navbar-dark bg-primary">
+            <div class="navbar-brand">
+                <i class="fas fa-robot fa-lg"></i>
+            </div>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <ul class="navbar-nav">
+                    {% for href, id, caption, icon in navigation_bar %}
+                    <li {% if id == active_page %}
+                            class="nav-item active"
+                        {% else %}
+                            class="nav-item"
+                        {% endif%}>
+                        <a class="nav-link no-underline" href="{{ href|e }}"
+                        {% if id == 'help' %}
+                        onClick="getBotResponse('help')"
+                        {% endif %}
+                        >
+                        <i class="{{ icon|e }}"></i>
+                        {{ caption|e }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </nav>
+        {% endblock %}
+
+        {% if show_title %}
+        <div class="row justify-content-center vertical-center mt-3">
+            <h1> {{ title }} </h1>
+        </div>
+        {% endif %}
 
         {% block app_content %}
         {% endblock %}

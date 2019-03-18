@@ -1,23 +1,49 @@
 {% extends "base.html" %}
+{% set active_page = "about" %}
 
 {% block app_content %}
-    <div class="row justify-content-centre">
+    <div class="row text-white mx-auto mt-5">
         <div class="col text-center">
-            <p>A Chatbot which can answer question about C++.</p>
-            <p>The data used to train it is collected from StackOverflow.</p>
+            <div class="card text-white bg-info mb-3 mx-auto" style="width: 18rem;">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-robot"></i> What is this?</h3>
+                    <p class="card-text">A chatbot which can answer questions about <strong>C++</strong>.
+                        It can be trained to answer questions about anything though!</p>
+                </div>
+            </div>
         </div>
-    </div>
-    
-    <br/>
 
-    <div class="row justify-content-centre">
         <div class="col text-center">
-            <h1>Help</h1>
-            <p>
-            You can type <b>help</b> to show this message.
-            </br> After you ask a question, you can type <b>alternate response</b>
-            to get another answer if the original one wasn't helpful.
-            </p>
+            <div class="card text-white bg-info mb-3 mx-auto" style="width: 18rem;">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-book"></i> Training data</h3>
+                    <p class="card-text">The data used to train this chatbot was collected from
+                        <a href="https://stackoverflow.com/questions/tagged/c%2b%2b?sort=votes&pageSize=15">Stack Overflow.</a> </p>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div class="row text-white mx-auto mt-5">
+        <div class="col text-center">
+            <div class="card text-white bg-info mb-3 mx-auto" style="width: 18rem;">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-tools"></i> How was it created?</h3>
+                    <p class="card-text">The front-end was created with <a href="http://flask.pocoo.org/">Flask</a>
+                        and the back-end was created with <a href="https://chatterbot.readthedocs.io/en/stable/">Chatterbot</a>.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col text-center">
+            <div class="card text-white bg-info mb-3 mx-auto" style="width: 18rem;">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fab fa-github"></i> GitHub</h3>
+                    <p class="card-text">Feel free to check out the GitHub repository of the project!</p>
+                    <a href="https://github.com/Ligh7bringer/Chatbot" class="btn btn-primary">Repository</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}

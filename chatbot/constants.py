@@ -9,11 +9,11 @@ DATA_DIR = "training_data"
 DATA_DIR_PATH = os.path.join(FLASK_APP_ROOT, DATA_DIR)
 
 # Chatbot help message
-BOT_HELP_MSG = '<ul>' \
-               '<li>You can type <b>help</b> to show this message. </li>' \
-               '<li> After you ask a question, you can type <b>alternate response</b> ' \
+BOT_HELP_MSG = '<ul class="fa-ul">' \
+               '<li><span class="fa-li"><i class="fas fa-check"></i></span>You can type <b>help</b> to show this message. </li>' \
+               '<li><span class="fa-li" ><i class="fas fa-check"></i></span>After you ask a question, you can type <b>alternate response</b> ' \
                'to get another answer if the original one wasn\'t helpful.</li>' \
-               '<li> Giving feedback for answers helps the bot answer questions more accurately.</li>' \
+               '<li><span class="fa-li" ><i class="fas fa-check"></i></span>Giving feedback for answers helps the bot answer questions more accurately.</li>' \
                '</ul>'
 
 BOT_NOT_UNDERSTAND = "I am sorry, but I do not understand."

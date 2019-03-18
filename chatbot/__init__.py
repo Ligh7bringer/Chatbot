@@ -77,11 +77,11 @@ def create_app(test_config=None):
 
     @app.route("/")
     def home():
-        return render_template("chatbot.html", title="Chatbot")
+        return render_template("chatbot.html", title="Chatbot", show_title=False)
 
     @app.route("/about")
     def about():
-        return render_template("about.html", title="About")
+        return render_template("about.html", title="About", show_title=False)
 
     bot.init_app(app)
 

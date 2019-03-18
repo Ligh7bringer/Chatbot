@@ -1,13 +1,14 @@
 {% extends "base.html" %}
+{% set active_page = "home" %}
 
 {% block app_content %}
     <div class="row">
         <div class="col h-100 flex-fill d-flex">
             <div id="chatbox" class="border border-secondary rounded">
                 <div class="p-3 mb-2 bg-dark text-white rounded">
-                    Hi! Ask me a question. <br/>
-                    <br><b>Tip:</b> <i>You can ask me for help by typing "help" in the chat or clicking <a href="#" id="helpLink">this</a> link.
-                    <br>You can also ask for an <b>alternate response</b> to your last question</i>.
+                    Hi! Ask me a question.
+                    <br><br>
+                    <b>Tip:</b> For more information about what you can do, click the "<b>Help</b>" button or click <a href="#" class="helpLink">here</a>.
                 </div>
             </div>
         </div>
@@ -32,12 +33,16 @@
                 <strong>Did this information answer your question?</strong>
             </div>
             <div class="col-sm-6">
-                <div class="btn-group mr-2" role="group" aria-label="First group">
-                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'yes');" class="btn btn-success custom-button-width .navbar-right">Yes</button>
+                <div class="btn-group mr-2" role="group" aria-label="Yes">
+                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'yes');" class="btn btn-sm btn-success custom-button-width .navbar-right">Yes</button>
                 </div>
         
-                <div class="btn-group mr-2" role="group" aria-label="First group">
-                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'no');" class="btn btn-danger custom-button-width .navbar-right">No</button>
+                <div class="btn-group mr-2" role="group" aria-label="No">
+                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'no');" class="btn btn-sm btn-danger custom-button-width .navbar-right">No</button>
+                </div>
+                or
+                <div class="btn-group mr-2" role="group" aria-label="Alternate response">
+                    <button type="button" class="btn btn-sm btn-primary custom-button-width" onClick="getBotResponse('alternate response')">Alt response</button>
                 </div>
             </div>
         </div>
@@ -67,10 +72,15 @@
     </script>
 
     <script id="feedbackMsgTmpl" type="text/x-jsrender">
-        <strong>Thank you for the feedback!</strong>
-        <%if feedback_no%>
-            <br>Try asking for an <strong>alternate response</strong>.
-        <%/if%>
+        <div class="row">
+            <div class="col my-auto">
+                <strong class="d-inline-block align-middle">Thank you for the feedback!</strong>
+
+                <%if feedback_no%>
+                    <button type="button" class="align-centre btn btn-sm btn-primary" onClick="getBotResponse('alternate response')">Alternate response</button>
+                <%/if%>
+            <div>
+        </div>
     </script>
     {% endblock %}
 {% endblock %}

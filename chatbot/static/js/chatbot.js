@@ -218,7 +218,7 @@ $(document).ready(function() {
     });
 
     // check if the help link is clicked
-    $('#helpLink').click(function () {
+    $('.helpLink').click(function () {
         getBotResponse("Help");
     });
 });

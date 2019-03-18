@@ -3,7 +3,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    /*overflow: hidden;*/
 }
 
 a:not(.no-underline) {
@@ -22,25 +22,17 @@ a:hover:not(.no-underline) {
 
 h1 {
     color: black;
-    margin-bottom: 0;
-    margin-top: 0;
+    margin: 0px;
+    padding: 0px;
     text-align: center;
-    font-size: 40px;
-}
-
-.page-title {
-    color: black;
-    margin-bottom: 0;
-    margin-top: 0;
-    text-align: center;
-    font-size: 4vh;
 }
 
 #chatbox {
     width: 100%;
-    height: 84%;
+    height: 83%;
     overflow-y: auto;
     overflow-x: hidden;
+    margin-top: 0.7%;
 }
 
 .force-to-bottom {
@@ -55,4 +47,14 @@ hr {
 
 .custom-button-width {
 	width:100px;
+}
+
+li.fa-ul {
+    font-size : 2em;
+    margin: 1em 0;
+}
+
+li.fa-ul > *{
+    display: inline-block;
+    vertical-align: middle;
 }
