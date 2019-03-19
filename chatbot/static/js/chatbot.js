@@ -6,6 +6,7 @@ const spinnerHtml = spinnerTmpl.render();
 // preselect necessary divs
 let chatbox =  $("#chatbox");
 let textInput = $("#textInput");
+let enterDisabled = false;
 
 const exclude_feedback_qs = [
     "help"
@@ -106,6 +107,8 @@ function appendChatMsg(text, user, feedback=false) {
 
 // sends a request to the backend program
 function sendRequest(data) {
+    $('#buttonInput').prop('disabled', true);
+    enterDisabled = true;
     $.get("/get", data).done(function (response) {
             hideSpinner();
 
@@ -125,6 +128,8 @@ function sendRequest(data) {
             $('pre code').each(function (i, e) {
                 hljs.highlightBlock(e)
             });
+            $('#buttonInput').prop('disabled', false);
+            enterDisabled = false;
     });
 }
 
@@ -200,6 +205,10 @@ function getFeedback(id, feedback) {
 // executed when the page is fully loaded
 $(document).ready(function() {
     // hljs.configure({languages: ['C++', 'C']});
+    var pathname = window.location.pathname;
+    if(pathname === '/about') {
+        $("#nav-help-link").remove();
+    }
 
     // check if the Send button is clicked
     $("#buttonInput").click(function() {
@@ -211,7 +220,7 @@ $(document).ready(function() {
     // check if Enter is pressed in the text input
     textInput.keypress(function(e) {
         let rawText = textInput.val();
-        if(e.which === 13) {
+        if(e.which === 13 && !enterDisabled) {
             textInput.val("");
             getBotResponse(rawText);
         }

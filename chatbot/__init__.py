@@ -81,7 +81,7 @@ def create_app(test_config=None):
 
     @app.route("/about")
     def about():
-        return render_template("about.html", title="About", show_title=False)
+        return render_template("about.html", title="About", show_title=True)
 
     bot.init_app(app)
 

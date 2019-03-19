@@ -2,26 +2,33 @@
 {% set active_page = "home" %}
 
 {% block app_content %}
-    <div class="row h-100 flex-fill d-flex">
-        <div class="col">
-            <div id="chatbox" class="border border-secondary rounded">
-                <div class="p-3 mb-2 bg-dark text-white rounded">
-                    Hi! Ask me a question.
-                    <br><br>
-                    <b>Tip:</b> For more information about what you can do, click the "<b>Help</b>" button or click <a href="#" class="helpLink">here</a>.
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row force-to-bottom flex-shrink-0">
-        <div class="col">
-            <div class="input-group mb-3">
-                <input id="textInput" class="form-control" type="text" name="msg" placeholder="Ask your question here..." required>
-                <div class="input-group-append">
-                    <input id="buttonInput" class="btn btn-primary btn-md" type="submit" value="Send">
+    <div class="container-wrapper h-100">
+
+        <div class="container mx-auto">
+            <div class="row h-100 mt-2">
+                <div class="col-12 mx-auto">
+                    <div id="chatbox" class="border border-secondary rounded">
+                        <div class="p-3 mb-2 bg-dark text-white rounded">
+                            Hi! Ask me a question.
+                            <br><br>
+                            <b>Tip:</b> For more information about what you can do, click the "<b>Help</b>" button or click <a href="#" class="helpLink">here</a>.
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <div class="row mt-2">
+                <div class="col-12 mx-auto">
+                    <div class="input-group mb-3">
+                        <input id="textInput" class="form-control" type="text" name="msg" placeholder="Ask your question here..." required>
+                        <div class="input-group-append">
+                            <input id="buttonInput" class="btn btn-primary btn-md" type="submit" value="Send">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -36,7 +43,7 @@
                 <div class="btn-group mr-2" role="group" aria-label="Yes">
                     <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'yes');" class="btn btn-sm btn-success custom-button-width .navbar-right">Yes</button>
                 </div>
-        
+
                 <div class="btn-group mr-2" role="group" aria-label="No">
                     <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'no');" class="btn btn-sm btn-danger custom-button-width .navbar-right">No</button>
                 </div>

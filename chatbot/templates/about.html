@@ -2,47 +2,53 @@
 {% set active_page = "about" %}
 
 {% block app_content %}
-    <div class="row text-white mx-auto mt-5">
-        <div class="col text-center">
-            <div class="card text-white bg-info mb-3 mx-auto" style="width: 18rem;">
-                <div class="card-body">
-                    <h3 class="card-title"><i class="fas fa-robot"></i> What is this?</h3>
-                    <p class="card-text">A chatbot which can answer questions about <strong>C++</strong>.
-                        It can be trained to answer questions about anything though!</p>
-                </div>
-            </div>
-        </div>
+    <div class="container">
+        <div class="row text-center text-white">
 
-        <div class="col text-center">
-            <div class="card text-white bg-info mb-3 mx-auto" style="width: 18rem;">
-                <div class="card-body">
-                    <h3 class="card-title"><i class="fas fa-book"></i> Training data</h3>
-                    <p class="card-text">The data used to train this chatbot was collected from
-                        <a href="https://stackoverflow.com/questions/tagged/c%2b%2b?sort=votes&pageSize=15">Stack Overflow.</a> </p>
+            <div class="col-sm-4 py-2 ">
+                <div class="card bg-info mb-3">
+                    <div class="card-header"><i class="fas fa-robot fa-lg"></i></div>
+                    <div class="card-body">
+                        <h3 class="card-title">What is it?</h3>
+                        <p class="card-text">A chatbot which can answer questions about <strong>C++</strong>.
+                            It can be trained to answer questions about anything though!</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="row text-white mt-5 mx-auto">
-        <div class="col text-center">
-            <div class="card text-white bg-info mb-3 mx-auto" style="width: 18rem;">
-                <div class="card-body">
-                    <h3 class="card-title"><i class="fas fa-tools"></i> How was it created?</h3>
-                    <p class="card-text">The front-end was created with <a href="http://flask.pocoo.org/">Flask</a>
-                        and the back-end was created with <a href="https://chatterbot.readthedocs.io/en/stable/">Chatterbot</a>.</p>
+            <div class="col-sm-4 py-2">
+                <div class="card bg-info mb-3">
+                    <div class="card-header"><i class="fas fa-book fa-lg"></i></div>
+                    <div class="card-body">
+                        <h3 class="card-title">Training data</h3>
+                        <p class="card-text">The data used to train this chatbot was collected from
+                            <a href="https://stackoverflow.com/questions/tagged/c%2b%2b?sort=votes&pageSize=15">Stack Overflow.</a></p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col text-center">
-            <div class="card text-white bg-info mb-3 mx-auto" style="width: 18rem;">
-                <div class="card-body">
-                    <h3 class="card-title"><i class="fab fa-github"></i> GitHub</h3>
-                    <p class="card-text">Feel free to check out the GitHub repository of the project!</p>
-                    <a href="https://github.com/Ligh7bringer/Chatbot" class="btn btn-primary">Repository</a>
+            <div class="col-sm-4 py-2">
+                <div class="card bg-info mb-3">
+                    <div class="card-header"><i class="fas fa-tools fa-lg"></i></div>
+                    <div class="card-body">
+                        <h3 class="card-title">How was it created?</h3>
+                        <p class="card-text">The front-end was created with <a href="http://flask.pocoo.org/">Flask</a>
+                                and the back-end was created with <a href="https://chatterbot.readthedocs.io/en/stable/">Chatterbot</a>.</p>
+                    </div>
                 </div>
             </div>
+
+            <div class="col-sm-4 py-2">
+                <div class="card bg-info mb-3">
+                    <div class="card-header"><i class="fab fa-github fa-lg"></i></div>
+                    <div class="card-body">
+                        <h3 class="card-title">GitHub</h3>
+                        <p class="card-text">Feel free to check out the GitHub repository of the project!</p>
+                            <a href="https://github.com/Ligh7bringer/Chatbot" class="btn btn-primary">Repository</a>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 

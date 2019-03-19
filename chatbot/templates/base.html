@@ -2,8 +2,8 @@
 
 {% set navigation_bar = [
             ('/', 'home', 'Home', 'fas fa-home'),
-            ('#', 'help', 'Help', 'fas fa-question-circle'),
-            ('/about', 'about', 'About', 'fas fa-info-circle')
+            ('/about', 'about', 'About', 'fas fa-info-circle'),
+            ('#', 'help', 'Help', 'fas fa-question-circle')
     ] -%}
 
 {% set active_page = active_page|default('index') -%}
@@ -26,15 +26,15 @@
     </head>
 
     <body>
-        {% block content %}
-        <div class="container-fluid h-100 d-flex flex-column">
-
         {% block navigation %}
+        <div class="container mx-auto">
         <nav class="navbar navbar-expand navbar-dark bg-primary">
             <div class="navbar-brand">
                 <i class="fas fa-robot fa-lg"></i>
             </div>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse"
+                    data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup"
+                    aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
@@ -47,7 +47,7 @@
                         {% endif%}>
                         <a class="nav-link no-underline" href="{{ href|e }}"
                         {% if id == 'help' %}
-                        onClick="getBotResponse('help')"
+                            onClick="getBotResponse('help')" id="nav-help-link"
                         {% endif %}
                         >
                         <i class="{{ icon|e }}"></i>
@@ -58,18 +58,22 @@
                 </ul>
             </div>
         </nav>
+        </div>
         {% endblock %}
 
-        {% if show_title %}
-        <div class="row justify-content-center vertical-center mt-3">
-            <h1> {{ title }} </h1>
-        </div>
-        {% endif %}
+        {% block content %}
 
-        {% block app_content %}
-        {% endblock %}
+            {% if show_title %}
+                <div class="container">
+                    <div class="row justify-content-center vertical-center mt-3">
+                        <h1> {{ title }} </h1>
+                    </div>
+                </div>
+            {% endif %}
 
-        </div>
+            {% block app_content %}
+            {% endblock %}
+
         {% endblock %}
 
         {{ bootstrap.load_js() }}
