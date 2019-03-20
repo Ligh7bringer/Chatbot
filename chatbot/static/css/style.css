@@ -57,3 +57,11 @@ a:hover, a:focus {
     text-decoration: none;
     background-size: 100% 2px;
 }
+
+.bg-darker {
+    background: #343A40;
+}
+
+.bg-user {
+    background: #17A2B8;
+}

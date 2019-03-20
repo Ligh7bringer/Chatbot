@@ -29,7 +29,7 @@ $.views.settings.delimiters("<%", "%>");
 
 String.prototype.isEmpty = String.prototype.isEmpty || function() {
    return !(!!this.trim().length);
-}
+};
 
 function resizeImages() {
    $('img').addClass('img-fluid');
@@ -73,7 +73,7 @@ function warn(title, message) {
 function appendChatMsg(text, user, feedback=false) {
     const data = {
         "text": text,
-        "bg_col": user ? "info" : "dark"
+        "bg_col": user ? "user" : "darker"
     };
 
     const messageTmpl = $.templates('#messageTmpl');
