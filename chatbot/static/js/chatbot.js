@@ -79,11 +79,11 @@ function appendChatMsg(text, user, feedback=false) {
     const messageTmpl = $.templates('#messageTmpl');
     const messageHtml = messageTmpl.render(data);
 
-    chatbox.append(messageHtml);
+    $(messageHtml).appendTo(chatbox).hide().fadeIn(700);
+
+    // chatbox.append(messageHtml);
 
     if(feedback) {
-        console.log("btn id: ", btn_id);
-
         const feedbackTmpl = $.templates('#feedbackTmpl');
         const feedbackData = {
             "btn_id": btn_id
@@ -121,7 +121,6 @@ function sendRequest(data) {
 
             if (fb_q && fb_a) {
                 cache.push([lastQuestion, response]);
-                console.log(cache);
             }
 
             resizeImages();
@@ -179,7 +178,6 @@ function getFeedback(id, feedback) {
     const idx = id[id.length-1];
     const q = cache[idx][0];
     const a = cache[idx][1];
-    console.log(idx, q, a);
 
     const requestBody = {
         request_type: "feedback",
