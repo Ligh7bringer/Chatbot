@@ -6,7 +6,7 @@ const spinnerHtml = spinnerTmpl.render();
 // preselect necessary divs
 let chatbox =  $("#chatbox");
 let textInput = $("#textInput");
-let enterDisabled = false;
+let sendingRequest = false;
 
 const exclude_feedback_qs = [
     "help"
@@ -17,10 +17,7 @@ const exclude_feedback_answers = [
 ];
 
 // global variables
-let  lastQuestion = "";
-let lastAnswer = "";
 let btn_id = 0;
-
 let cache = [];
 
 // use different delimiters than jinja's
@@ -108,7 +105,7 @@ function appendChatMsg(text, user, feedback=false) {
 // sends a request to the backend program
 function sendRequest(data) {
     $('#buttonInput').prop('disabled', true);
-    enterDisabled = true;
+    sendingRequest = true;
     $.get("/get", data).done(function (response) {
             hideSpinner();
 
@@ -128,7 +125,7 @@ function sendRequest(data) {
                 hljs.highlightBlock(e)
             });
             $('#buttonInput').prop('disabled', false);
-            enterDisabled = false;
+            sendingRequest = false;
     });
 }
 
@@ -149,20 +146,22 @@ function getAlternateResponse() {
 
 // returns a response to the question the user asked
 function getBotResponse(rawText) {
-    if(rawText.isEmpty()) {
-        warn("Oops!", "It looks like you haven't a asked a question.");
-        chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
-    } else if(rawText.toLowerCase() === "alternate response") {
-        getAlternateResponse();
-    } else {
-        lastQuestion = rawText;
-        appendChatMsg(rawText, true);
+    if(!sendingRequest) {
+        if (rawText.isEmpty()) {
+            warn("Oops!", "It looks like you haven't a asked a question.");
+            chatbox.animate({scrollTop: chatbox[0].scrollHeight}, 1000);
+        } else if (rawText.toLowerCase() === "alternate response") {
+            getAlternateResponse();
+        } else {
+            lastQuestion = rawText;
+            appendChatMsg(rawText, true);
 
-        const data = {
-            request_type: "regular",
-            msg: rawText
-        };
-        sendRequest(data);
+            const data = {
+                request_type: "regular",
+                msg: rawText
+            };
+            sendRequest(data);
+        }
     }
 }
 
@@ -202,7 +201,8 @@ function getFeedback(id, feedback) {
 
 // executed when the page is fully loaded
 $(document).ready(function() {
-    // hljs.configure({languages: ['C++', 'C']});
+    // hide the help menu button in the about page
+    // a it can't be used in it
     var pathname = window.location.pathname;
     if(pathname === '/about') {
         $("#nav-help-link").remove();
@@ -211,14 +211,19 @@ $(document).ready(function() {
     // check if the Send button is clicked
     $("#buttonInput").click(function() {
         let rawText = textInput.val();
-        textInput.val("");
-        getBotResponse(rawText);
+        // wait until the current request is finished
+        if(!sendingRequest) {
+            textInput.val("");
+            getBotResponse(rawText);
+        }
     });
 
     // check if Enter is pressed in the text input
     textInput.keypress(function(e) {
         let rawText = textInput.val();
-        if(e.which === 13 && !enterDisabled) {
+        // if enter is pressed
+        // and a request is not currently being sent
+        if(e.which === 13 && !sendingRequest) {
             textInput.val("");
             getBotResponse(rawText);
         }
