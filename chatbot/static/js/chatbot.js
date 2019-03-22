@@ -4,7 +4,7 @@ const spinnerTmpl = $.templates("#spinnerTmpl");
 const spinnerHtml = spinnerTmpl.render();
 
 // preselect necessary divs
-let chatbox =  $("#chatbox");
+let chatbox = $("#chatbox");
 let textInput = $("#textInput");
 let sendingRequest = false;
 
@@ -25,11 +25,11 @@ let cache = [];
 $.views.settings.delimiters("<%", "%>");
 
 String.prototype.isEmpty = String.prototype.isEmpty || function() {
-   return !(!!this.trim().length);
+    return !(!!this.trim().length);
 };
 
 function resizeImages() {
-   $('img').addClass('img-fluid');
+    $('img').addClass('img-fluid');
 }
 
 // shows the loading animation
@@ -45,7 +45,7 @@ function hideSpinner() {
 // hides a warning message after 2 seconds
 function hideWarning() {
     window.setTimeout(function() {
-        $(".alert").fadeTo(500, 0).slideUp(500, function(){
+        $(".alert").fadeTo(500, 0).slideUp(500, function() {
             $(this).remove();
         });
     }, 2500);
@@ -67,7 +67,7 @@ function warn(title, message) {
 }
 
 // adds a user or bot message to the chatbox
-function appendChatMsg(text, user, feedback=false) {
+function appendChatMsg(text, user, feedback = false) {
     const data = {
         "text": text,
         "bg_col": user ? "user" : "darker"
@@ -80,7 +80,7 @@ function appendChatMsg(text, user, feedback=false) {
 
     // chatbox.append(messageHtml);
 
-    if(feedback) {
+    if (feedback) {
         const feedbackTmpl = $.templates('#feedbackTmpl');
         const feedbackData = {
             "btn_id": btn_id
@@ -93,9 +93,11 @@ function appendChatMsg(text, user, feedback=false) {
     }
 
     // if this is a message sent by the user
-    if(user) {
+    if (user) {
         // scroll down to it
-        chatbox.animate({ scrollTop: chatbox[0].scrollHeight }, 1000);
+        chatbox.animate({
+            scrollTop: chatbox[0].scrollHeight
+        }, 1000);
         showSpinner();
     } else {
         lastAnswer = text;
@@ -106,32 +108,32 @@ function appendChatMsg(text, user, feedback=false) {
 function sendRequest(data) {
     $('#buttonInput').prop('disabled', true);
     sendingRequest = true;
-    $.get("/get", data).done(function (response) {
-            hideSpinner();
+    $.get("/get", data).done(function(response) {
+        hideSpinner();
 
-            // can feedback be given for this question
-            const fb_q = !exclude_feedback_qs.includes(lastQuestion.toLowerCase().trim());
-            // can feedback be given for this answer
-            const fb_a = !exclude_feedback_answers.includes(response.toLowerCase().trim());
+        // can feedback be given for this question
+        const fb_q = !exclude_feedback_qs.includes(lastQuestion.toLowerCase().trim());
+        // can feedback be given for this answer
+        const fb_a = !exclude_feedback_answers.includes(response.toLowerCase().trim());
 
-            appendChatMsg(response, false, fb_q && fb_a);
+        appendChatMsg(response, false, fb_q && fb_a);
 
-            if (fb_q && fb_a) {
-                cache.push([lastQuestion, response]);
-            }
+        if (fb_q && fb_a) {
+            cache.push([lastQuestion, response]);
+        }
 
-            resizeImages();
-            $('pre code').each(function (i, e) {
-                hljs.highlightBlock(e)
-            });
-            $('#buttonInput').prop('disabled', false);
-            sendingRequest = false;
+        resizeImages();
+        $('pre code').each(function(i, e) {
+            hljs.highlightBlock(e)
+        });
+        $('#buttonInput').prop('disabled', false);
+        sendingRequest = false;
     });
 }
 
 // returns another response to the last question that was asked
 function getAlternateResponse() {
-    if(!lastQuestion) {
+    if (!lastQuestion) {
         warn("Oops!", "It looks like you haven't asked any other questions yet.");
     } else {
         appendChatMsg("alternate response", true);
@@ -142,14 +144,24 @@ function getAlternateResponse() {
 
         sendRequest(data);
     }
+
+    // remove alternate response buttons
+    // except the last one
+    let btns = $('.alt-response-btn');
+    for (let i = 0; i < btns.length; i++) {
+        console.log(btns[i]);
+        btns[i].remove();
+    }
 }
 
 // returns a response to the question the user asked
 function getBotResponse(rawText) {
-    if(!sendingRequest) {
+    if (!sendingRequest) {
         if (rawText.isEmpty()) {
             warn("Oops!", "It looks like you haven't a asked a question.");
-            chatbox.animate({scrollTop: chatbox[0].scrollHeight}, 1000);
+            chatbox.animate({
+                scrollTop: chatbox[0].scrollHeight
+            }, 1000);
         } else if (rawText.toLowerCase() === "alternate response") {
             getAlternateResponse();
         } else {
@@ -174,7 +186,7 @@ function getFeedback(id, feedback) {
     div.remove();
     parent.append(spinnerHtml);
 
-    const idx = id[id.length-1];
+    const idx = id[id.length - 1];
     const q = cache[idx][0];
     const a = cache[idx][1];
 
@@ -193,9 +205,9 @@ function getFeedback(id, feedback) {
 
     feedbackMsgHtml = feedbackMsgTmpl.render(template_data);
 
-    $.get("/get", requestBody).done(function (data) {
-            hideSpinner();
-            parent.append(feedbackMsgHtml);
+    $.get("/get", requestBody).done(function(data) {
+        hideSpinner();
+        parent.append(feedbackMsgHtml);
     });
 }
 
@@ -203,8 +215,8 @@ function getFeedback(id, feedback) {
 $(document).ready(function() {
     // hide the help menu button in the about page
     // a it can't be used in it
-    var pathname = window.location.pathname;
-    if(pathname === '/about') {
+    const pathname = window.location.pathname;
+    if (pathname === '/about') {
         $("#nav-help-link").remove();
     }
 
@@ -212,7 +224,7 @@ $(document).ready(function() {
     $("#buttonInput").click(function() {
         let rawText = textInput.val();
         // wait until the current request is finished
-        if(!sendingRequest) {
+        if (!sendingRequest) {
             textInput.val("");
             getBotResponse(rawText);
         }
@@ -223,14 +235,14 @@ $(document).ready(function() {
         let rawText = textInput.val();
         // if enter is pressed
         // and a request is not currently being sent
-        if(e.which === 13 && !sendingRequest) {
+        if (e.which === 13 && !sendingRequest) {
             textInput.val("");
             getBotResponse(rawText);
         }
     });
 
     // check if the help link is clicked
-    $('.helpLink').click(function () {
+    $('.helpLink').click(function() {
         getBotResponse("Help");
     });
 });

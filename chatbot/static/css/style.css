@@ -42,7 +42,7 @@ li.fa-ul > *{
     vertical-align: middle;
 }
 
-a {
+a:not(.no-underline) {
     color: #5499C7;
     text-decoration: none;
     background-image: linear-gradient(currentColor, currentColor);
@@ -52,7 +52,7 @@ a {
     transition: background-size .5s;
 }
 
-a:hover, a:focus {
+a:hover:not(.no-underline), a:focus:not(.no-underline) {
     color: #5499C7;
     text-decoration: none;
     background-size: 100% 2px;

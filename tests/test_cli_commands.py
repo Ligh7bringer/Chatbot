@@ -1,9 +1,9 @@
 import click
 from chatbot.run_it import app
-from chatbot.bot import train_command
-from chatbot.bot import del_command
-from chatbot.bot import crawl_command
-from chatbot.bot import clean_command
+from chatbot.cli_interface import train_command
+from chatbot.cli_interface import del_command
+from chatbot.cli_interface import crawl_command
+from chatbot.cli_interface import clean_command
 from chatbot.constants import *
 import os
 

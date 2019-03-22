@@ -1,6 +1,6 @@
 from chatterbot.conversation import Statement
 
-
+# Tests whether to number of rows in the database can be counted.
 def test_db_count(test_adapter):
     expected = 50
     actual = test_adapter.count()
@@ -8,6 +8,7 @@ def test_db_count(test_adapter):
     assert expected is actual
 
 
+# Tests whether SELECT ... FROM queries work.
 def test_filter(test_adapter):
     statement = Statement("hi")
 
@@ -16,10 +17,10 @@ def test_filter(test_adapter):
     }
 
     result = list(test_adapter.filter(**kwargs))
-    assert len(result) > 0
     assert len(result) == 2
 
 
+# Tests whether new entries can be added to the database.
 def test_create(test_adapter):
     statement_model = test_adapter.get_model("statement")
 
@@ -47,6 +48,7 @@ def test_create(test_adapter):
     test_adapter._session_finish(session)
 
 
+# Tests whether a random record from the database can be retrieved.
 def test_get_random(test_adapter):
     record = test_adapter.get_random()
 
@@ -68,6 +70,7 @@ def test_get_random(test_adapter):
 #
 #     assert response.text == updated
 
+# Tests if many entries can be added to the database.
 def test_create_many(test_adapter):
     count = test_adapter.count()
     statements = []

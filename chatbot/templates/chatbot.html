@@ -47,9 +47,13 @@
                 <div class="btn-group mr-2" role="group" aria-label="No">
                     <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'no');" class="btn btn-sm btn-danger custom-button-width .navbar-right">No</button>
                 </div>
-                or
-                <div class="btn-group mr-2" role="group" aria-label="Alternate response">
-                    <button type="button" class="btn btn-sm btn-primary custom-button-width" onClick="getBotResponse('alternate response')">Alt response</button>
+
+                <div class="alt-response-btn">
+                    or
+                    <div class="btn-group mr-2" role="group" aria-label="Alternate response">
+                        <button type="button" class="btn btn-sm btn-primary custom-button-width "
+                        onClick="getBotResponse('alternate response')">Alt response</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -84,7 +88,7 @@
                 <strong class="d-inline-block align-middle">Thank you for the feedback!</strong>
 
                 <%if feedback_no%>
-                    <button type="button" class="align-centre btn btn-sm btn-primary" onClick="getBotResponse('alternate response')">Alternate response</button>
+                    <button type="button" class="align-centre btn btn-sm btn-primary alt-response-btn" onClick="getBotResponse('alternate response')">Alternate response</button>
                 <%/if%>
             <div>
         </div>

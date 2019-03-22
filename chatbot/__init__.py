@@ -2,15 +2,14 @@ from flask import Flask, render_template, request
 from flask_bootstrap import Bootstrap
 import git
 import os
+from chatbot.bot import Bot
 from chatbot.config import Config
-from . import bot
-
-
+from . import cli_interface
+from chatbot.holder import bot
 # Sets up the flask app.
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-
     bootstrap = Bootstrap(app)
 
     app.config.from_object(Config)
@@ -32,14 +31,21 @@ def create_app(test_config=None):
             alt_question = "ALT_RESPONSE"
             app.logger.info("Alternate response requested.")
 
-            return str(bot.get_bot_response(alt_question))
+            return str(bot.get_response(alt_question))
 
         if request_type == "feedback":
             answer = request.args.get('answer')
             feedback = request.args.get('rating')
             app.logger.info("Feedback given.")
 
-            bot.give_feedback(answer, feedback)
+            # convert 'yes' to 1
+            if feedback is 'yes':
+                value = 1
+            # anything else to -1
+            else:
+                value = -1
+
+            bot.update_rating(answer, value)
             return "OK"
 
         if request_type == "regular":
@@ -47,7 +53,7 @@ def create_app(test_config=None):
             # get the message
             message = request.args.get('msg')
 
-            return str(bot.get_bot_response(message))
+            return str(bot.get_response(message))
 
         # if this code is reached,
         # the request type was invalid
@@ -83,6 +89,6 @@ def create_app(test_config=None):
     def about():
         return render_template("about.html", title="About", show_title=True)
 
-    bot.init_app(app)
+    cli_interface.init_app(app)
 
     return app
