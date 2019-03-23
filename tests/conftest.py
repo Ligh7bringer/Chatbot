@@ -1,5 +1,8 @@
+import os
+
 import pytest
 from chatbot import create_app, Bot
+import chatbot.constants as const
 
 ###################
 # PyTest fixtures #
@@ -53,3 +56,13 @@ def test_adapter():
     # delete the database
     bot.del_db()
     bot.clean()
+
+
+# @pytest.fixture(scope="session", autouse=True)
+# def cleanup(request):
+#     """Cleanup a testing directory once we are finished."""
+#     def remove_test_dir():
+#         os.removedirs(const.DATA_DIR_PATH)
+#         os.remove(const.DB_FILE_PATH)
+#
+#     request.addfinalizer(remove_test_dir)

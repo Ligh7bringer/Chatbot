@@ -106,6 +106,8 @@ def test_remove(test_adapter):
 
     assert initial_count > count
 
+    test_adapter._session_finish(session)
+
 
 # Test if the database tables can be dropped.
 def test_drop(test_adapter):
@@ -121,4 +123,7 @@ def test_drop(test_adapter):
     all_records = session.query(stmnt_model).all()
 
     assert len(all_records) is 0
+
+    test_adapter._session_finish(session)
+
 
