@@ -66,6 +66,20 @@ function warn(title, message) {
     hideWarning();
 }
 
+function removeAltResponseBtns() {
+    // remove alternate response buttons
+    // except the last one
+    let btns = $('.alt-response-btn');
+    for (let i = 0; i < btns.length; i++) {
+        btns[i].remove();
+    }
+
+    let ors = $('.or');
+    for (let i = 0; i < ors.length; i++) {
+        ors[i].remove();
+    }
+}
+
 // adds a user or bot message to the chatbox
 function appendChatMsg(text, user, feedback = false) {
     const data = {
@@ -77,8 +91,6 @@ function appendChatMsg(text, user, feedback = false) {
     const messageHtml = messageTmpl.render(data);
 
     $(messageHtml).appendTo(chatbox).hide().fadeIn(700);
-
-    // chatbox.append(messageHtml);
 
     if (feedback) {
         const feedbackTmpl = $.templates('#feedbackTmpl');
@@ -99,8 +111,6 @@ function appendChatMsg(text, user, feedback = false) {
             scrollTop: chatbox[0].scrollHeight
         }, 1000);
         showSpinner();
-    } else {
-        lastAnswer = text;
     }
 }
 
@@ -144,14 +154,6 @@ function getAlternateResponse() {
 
         sendRequest(data);
     }
-
-    // remove alternate response buttons
-    // except the last one
-    let btns = $('.alt-response-btn');
-    for (let i = 0; i < btns.length; i++) {
-        console.log(btns[i]);
-        btns[i].remove();
-    }
 }
 
 // returns a response to the question the user asked
@@ -175,6 +177,7 @@ function getBotResponse(rawText) {
             sendRequest(data);
         }
     }
+    removeAltResponseBtns();
 }
 
 // this function is called from the onClick property

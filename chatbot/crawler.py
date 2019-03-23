@@ -7,6 +7,7 @@ from functools import partial
 import logging
 import chatbot.constants as const
 import os
+import time
 
 
 class Crawler:
@@ -29,6 +30,8 @@ class Crawler:
         self.to_clean = [" [duplicate]", " [closed]"]
         # the logger for this class
         self.logger = logging.getLogger(__name__)
+        self.start_time = 0
+        self.end_time = 0
 
     # removes some unnecessary words from the question title
     def clean_title(self, title):
@@ -140,6 +143,8 @@ class Crawler:
                 print("Aborted!")
                 break
 
+        self.end_time = time.time()
+        self.logger.info(f"Crawling took {self.end_time - self.start_time}!")
         # print a message when done
         self.write_to_file(data)
 
@@ -155,6 +160,7 @@ class Crawler:
         # to the ThreadPoolExecutor
         func = partial(self.crawl_pages, self.num_pages)
 
+        self.start_time = time.time()
         try:
             # create a ThreadPoolExecutor
             with ThreadPoolExecutor(max_workers=self.num_threads) as executor:

@@ -129,6 +129,7 @@ class BestMatch(LogicAdapter):
         else:
             response = self.get_default_response(input_statement)
 
+        self.chatbot.logger.warning(f"RESPONSE WITH ID {response.id} SELECTED")
         return response
 
 

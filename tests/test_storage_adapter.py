@@ -1,5 +1,6 @@
 from chatterbot.conversation import Statement
 
+
 # Tests whether to number of rows in the database can be counted.
 def test_db_count(test_adapter):
     expected = 50
@@ -56,20 +57,6 @@ def test_get_random(test_adapter):
     assert record.text is not None
 
 
-# def test_update(test_bot):
-#     question = "Hi"
-#     updated = "foobar"
-#
-#     response = test_bot.get_bot_response(question)
-#
-#     kwargs = {
-#         "updated_text": updated
-#     }
-#     test_bot.bot.storage.update(response, **kwargs)
-#     response = test_bot.get_bot_response(question)
-#
-#     assert response.text == updated
-
 # Tests if many entries can be added to the database.
 def test_create_many(test_adapter):
     count = test_adapter.count()
@@ -83,4 +70,55 @@ def test_create_many(test_adapter):
     test_adapter.create_many(statements)
 
     assert test_adapter.count() == len(statements) + count
+
+
+# Tests whether a database entry can be updated.
+def test_update(test_bot):
+    question = "Hi"
+    updated = "foobar"
+
+    response = test_bot.get_response(question)
+
+    kwargs = {
+        "updated_text": updated
+    }
+    test_bot.chatbot.storage.update(response, **kwargs)
+
+    kwargs = {
+        "search_text_contains": updated
+    }
+    result = list(test_bot.chatbot.storage.filter(**kwargs))
+
+    assert result is not None
+
+
+# Tests if a database entry can be removed.
+def test_remove(test_adapter):
+    stmnt_model = test_adapter.get_model('statement')
+    session = test_adapter.Session()
+
+    all_records = session.query(stmnt_model).all()
+    initial_count = len(all_records)
+
+    test_adapter.remove("Hello")
+    all_records = session.query(stmnt_model).all()
+    count = len(all_records)
+
+    assert initial_count > count
+
+
+# Test if the database tables can be dropped.
+def test_drop(test_adapter):
+    stmnt_model = test_adapter.get_model('statement')
+    session = test_adapter.Session()
+
+    all_records = session.query(stmnt_model).all()
+    initial_count = len(all_records)
+
+    assert initial_count > 0
+
+    test_adapter.drop()
+    all_records = session.query(stmnt_model).all()
+
+    assert len(all_records) is 0
 

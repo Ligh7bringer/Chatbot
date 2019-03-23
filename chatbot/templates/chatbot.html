@@ -35,11 +35,13 @@
     {% block templates %}
     <script id="feedbackTmpl" type="text/x-jsrender">
         <hr/>
+
         <div class="row row-id-<%:btn_id%>">
             <div class="col-sm-4 my-auto">
                 <strong>Did this information answer your question?</strong>
             </div>
-            <div class="col-sm-6">
+
+            <div class="col-sm-3 my-auto">
                 <div class="btn-group mr-2" role="group" aria-label="Yes">
                     <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'yes');" class="btn btn-sm btn-success custom-button-width .navbar-right">Yes</button>
                 </div>
@@ -47,15 +49,19 @@
                 <div class="btn-group mr-2" role="group" aria-label="No">
                     <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'no');" class="btn btn-sm btn-danger custom-button-width .navbar-right">No</button>
                 </div>
+            </div>
 
-                <div class="alt-response-btn">
-                    or
-                    <div class="btn-group mr-2" role="group" aria-label="Alternate response">
-                        <button type="button" class="btn btn-sm btn-primary custom-button-width "
-                        onClick="getBotResponse('alternate response')">Alternate response</button>
-                    </div>
+            <div class="col-sm-1 my-auto or">
+            or
+            </div>
+
+            <div class="col-md-2"
+                <div class="btn-group mr-2" role="group" aria-label="Alternate response">
+                    <button type="button" class="btn btn-sm btn-primary custom-button-width alt-response-btn"
+                    onClick="getBotResponse('alternate response')">Alternate response</button>
                 </div>
             </div>
+
         </div>
     </script>
 
@@ -84,13 +90,15 @@
 
     <script id="feedbackMsgTmpl" type="text/x-jsrender">
         <div class="row">
-            <div class="col my-auto">
-                <strong class="d-inline-block align-middle">Thank you for the feedback!</strong>
+            <div class="col-sm-4 my-auto">
+                <strong class=>Thank you for the feedback!</strong>
+            <div>
 
+            <div class="col-sm-8 my-auto">
                 <%if feedback_no%>
                     <button type="button" class="align-centre btn btn-sm btn-primary alt-response-btn" onClick="getBotResponse('alternate response')">Alternate response</button>
                 <%/if%>
-            <div>
+            </div>
         </div>
     </script>
     {% endblock %}

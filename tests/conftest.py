@@ -16,7 +16,7 @@ def test_client():
     bot = Bot()
     bot.train()
 
-    # Establish an application context before running the tests.
+    # establish an application context
     ctx = flask_app.app_context()
     ctx.push()
 
@@ -33,7 +33,6 @@ def test_client():
 def test_bot():
     bot = Bot()
     bot.collect_data(1, 1, False)
-    bot = Bot()
 
     yield bot
 
@@ -53,3 +52,4 @@ def test_adapter():
 
     # delete the database
     bot.del_db()
+    bot.clean()
