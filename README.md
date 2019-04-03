@@ -37,3 +37,7 @@ After installing the required libraries, your options are:
 - ``` flask del_db ``` - **deletes** the database generated after training the chatbot
   * ```-y, --yes``` - don't ask for confirmation
 - `` flask run `` - runs a local server. The website can be accessed at **127.0.0.1:5000**
+
+# Tests
+
+Unit tests can be run from the root folder of the project with the command ``pytest`` *after* installing the dependencies.

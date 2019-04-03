@@ -1,5 +1,5 @@
 from chatterbot.storage import StorageAdapter
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 
 class SQLStorageAdapter(StorageAdapter):
@@ -170,7 +170,6 @@ class SQLStorageAdapter(StorageAdapter):
 
         total_statements = statements.count()
 
-        # print("---------------------------", statements, "---------------------------", sep="\n")
         for start_index in range(0, total_statements, page_size):
             for statement in statements.slice(start_index, start_index + page_size):
                 yield self.model_to_object(statement)
@@ -380,20 +379,36 @@ class SQLStorageAdapter(StorageAdapter):
         finally:
             session.close()
 
+    # used when the user gives feedback for an answer
     def update_rating(self, answer, rating):
+        # init session
         session = self.Session()
+        # get the statement model
         Statement = self.get_model('statement')
 
+        # if the answer is not empty
         if answer is not None:
-            record = session.query(Statement).filter(
-                Statement.text.contains(answer)
-            ).order_by(Statement.id.asc()).first()
+            # select it from the database, this produces a query similar to
+            # SELECT * FROM statements WHERE
+            # statement.text LIKE answer AND
+            # statement.in_response_to IS NOT NULL
+            record = session.query(Statement).filter(and_(
+                Statement.text.contains(answer),
+                Statement.in_response_to.isnot(None)
+                # order by id and select the first result
+            )).order_by(Statement.id.asc()).first()
 
+            # if the result is not null
             if record is not None:
                 self.logger.info(f"Updating rating for {record.id}...")
+                # update the record's 'rating'
                 record.rating += rating
+                # commit it to the database
                 session.add(record)
             else:
+                # if there are no results, something went wrong
+                # do nothing but log the problem
                 self.logger.error("Record couldn't be found in the database! Not updating rating...")
 
+        # finish the session and save the changes
         self._session_finish(session)

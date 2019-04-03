@@ -1,45 +1,67 @@
 {% extends "base.html" %}
+{% set active_page = "home" %}
 
 {% block app_content %}
-    <div class="row">
-        <div class="col h-100 flex-fill d-flex">
-            <div id="chatbox" class="border border-secondary rounded">
-                <div class="p-3 mb-2 bg-dark text-white rounded">
-                    Hi! Ask me a question. <br/>
-                    <br><b>Tip:</b> <i>You can ask me for help by typing "help" in the chat or clicking <a href="#" id="helpLink">this</a> link.
-                    <br>You can also ask for an <b>alternate response</b> to your last question</i>.
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row force-to-bottom flex-shrink-0">
-        <div class="col">
-            <div class="input-group mb-3">
-                <input id="textInput" class="form-control" type="text" name="msg" placeholder="Ask your question here..." required>
-                <div class="input-group-append">
-                    <input id="buttonInput" class="btn btn-primary btn-md" type="submit" value="Send">
+    <div class="container-wrapper h-100">
+
+        <div class="container mx-auto">
+            <div class="row h-100 mt-2">
+                <div class="col-12 mx-auto">
+                    <div id="chatbox">
+                        <div class="p-3 mb-2 bg-darker text-white rounded">
+                            Hi! Ask me a question.
+                            <br><br>
+                            <b>Tip:</b> For more information about what you can do, click the "<b>Help</b>" button or click <a href="#" class="helpLink">here</a>.
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <div class="row mt-3">
+                <div class="col-12 mx-auto">
+                    <div class="input-group mb-3">
+                        <input id="textInput" class="form-control" type="text" name="msg" placeholder="Ask your question here..." required>
+                        <div class="input-group-append">
+                            <input id="buttonInput" class="btn btn-primary btn-md" type="submit" value="Send">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     {% block templates %}
     <script id="feedbackTmpl" type="text/x-jsrender">
         <hr/>
+
         <div class="row row-id-<%:btn_id%>">
             <div class="col-sm-4 my-auto">
                 <strong>Did this information answer your question?</strong>
             </div>
-            <div class="col-sm-6">
-                <div class="btn-group mr-2" role="group" aria-label="First group">
-                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'yes');" class="btn btn-success custom-button-width .navbar-right">Yes</button>
+
+            <div class="col-sm-3 my-auto">
+                <div class="btn-group mr-2" role="group" aria-label="Yes">
+                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'yes');" class="btn btn-sm btn-success custom-button-width .navbar-right">Yes</button>
                 </div>
-        
-                <div class="btn-group mr-2" role="group" aria-label="First group">
-                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'no');" class="btn btn-danger custom-button-width .navbar-right">No</button>
+
+                <div class="btn-group mr-2" role="group" aria-label="No">
+                    <button type="button" onClick="getFeedback('.row-id-<%:btn_id%>', 'no');" class="btn btn-sm btn-danger custom-button-width .navbar-right">No</button>
                 </div>
             </div>
+
+            <div class="col-sm-1 my-auto or">
+            or
+            </div>
+
+            <div class="col-md-2"
+                <div class="btn-group mr-2" role="group" aria-label="Alternate response">
+                    <button type="button" class="btn btn-sm btn-primary custom-button-width alt-response-btn"
+                    onClick="getBotResponse('alternate response')">Alternate response</button>
+                </div>
+            </div>
+
         </div>
     </script>
 
@@ -67,10 +89,17 @@
     </script>
 
     <script id="feedbackMsgTmpl" type="text/x-jsrender">
-        <strong>Thank you for the feedback!</strong>
-        <%if feedback_no%>
-            <br>Try asking for an <strong>alternate response</strong>.
-        <%/if%>
+        <div class="row">
+            <div class="col-sm-4 my-auto">
+                <strong class=>Thank you for the feedback!</strong>
+            <div>
+
+            <div class="col-sm-8 my-auto">
+                <%if feedback_no%>
+                    <button type="button" class="align-centre btn btn-sm btn-primary alt-response-btn" onClick="getBotResponse('alternate response')">Alternate response</button>
+                <%/if%>
+            </div>
+        </div>
     </script>
     {% endblock %}
 {% endblock %}

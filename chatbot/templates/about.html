@@ -1,23 +1,57 @@
 {% extends "base.html" %}
+{% set active_page = "about" %}
 
 {% block app_content %}
-    <div class="row justify-content-centre">
-        <div class="col text-center">
-            <p>A Chatbot which can answer question about C++.</p>
-            <p>The data used to train it is collected from StackOverflow.</p>
-        </div>
-    </div>
-    
-    <br/>
+    <div class="container">
+        <div class="row text-center text-black-50">
 
-    <div class="row justify-content-centre">
-        <div class="col text-center">
-            <h1>Help</h1>
-            <p>
-            You can type <b>help</b> to show this message.
-            </br> After you ask a question, you can type <b>alternate response</b>
-            to get another answer if the original one wasn't helpful.
-            </p>
+            <div class="col-sm-6 py-2 ">
+                <div class="card bg-secondary mb-3">
+                    <div class="card-header"><i class="fas fa-robot fa-lg"></i></div>
+                    <div class="card-body">
+                        <h3 class="card-title">What is it?</h3>
+                        <p class="card-text">A chatbot which can answer questions about <strong>C++</strong>.
+                            It can be trained to answer questions about anything though!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 py-2">
+                <div class="card bg-secondary mb-3">
+                    <div class="card-header"><i class="fas fa-book fa-lg"></i></div>
+                    <div class="card-body">
+                        <h3 class="card-title">Training data</h3>
+                        <p class="card-text">The data used to train this chatbot was collected from
+                            <a href="https://stackoverflow.com/questions/tagged/c%2b%2b?sort=votes&pageSize=15"><i class="fab fa-stack-overflow"></i> Stack Overflow.</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 py-2">
+                <div class="card bg-secondary mb-3">
+                    <div class="card-header"><i class="fas fa-tools fa-lg"></i></div>
+                    <div class="card-body">
+                        <h3 class="card-title">How was it created?</h3>
+                        <p class="card-text">The front-end was created with <a href="http://flask.pocoo.org/">Flask</a>
+                                and the back-end was created with <a href="https://chatterbot.readthedocs.io/en/stable/">Chatterbot</a>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 py-2">
+                <div class="card bg-secondary mb-3">
+                    <div class="card-header"><i class="fab fa-github fa-lg"></i></div>
+                    <div class="card-body">
+                        <h3 class="card-title">GitHub</h3>
+                        <p class="card-text">Feel free to have a look at the GitHub repository of the project!</p>
+                            <a href="https://github.com/Ligh7bringer/Chatbot" class="btn btn-dark no-underline">
+                                <i class="fab fa-github fa-lg"></i> Repository
+                            </a>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
+
 {% endblock %}

@@ -1,165 +1,115 @@
+import logging
 import stat
-
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
-import click
-from flask.cli import with_appcontext
-from . import crawler
-from chatbot.constants import *
-import logging
+import os
+import chatbot.constants as const
+from chatbot.crawler import Crawler
 
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+class Bot:
+    def __init__(self, db=None):
+        # custom database name in the event that
+        # multiple chatbots need to exist
+        if db is None:
+            self.db = const.DB_FILE + const.DB_FILE_EXT
+        else:
+            self.db = db + const.DB_FILE_EXT
 
-cached_responses = []
+        # store path to the database
+        self.db_path = os.path.join(const.PROJECT_ROOT, self.db)
 
-# initialise chatbot
-bot = ChatBot(
-    # name
-    "C++ bot",
-    read_only=True,
-    storage_adapter="chatbot.storage.SQLStorageAdapter",
-    preprocessors=[
-        'chatterbot.preprocessors.unescape_html'
-    ],
-    logic_adapters=[
-        {
-            'import_path':                  'chatbot.logic.BestMatch',
-            'default_response':             BOT_NOT_UNDERSTAND,
-            'maximum_similarity_threshold':  0.90
-        },
-        {
-            'import_path':                  'chatbot.logic.SpecificResponseAdapter',
-            'input_text':                   'Help',
-            'output_text':                  BOT_HELP_MSG
-        }
-    ],
-    database_uri='sqlite:///' + DB_FILE
-)
+        # initialise chatbot
+        self.chatbot = ChatBot(
+            # name
+            "C++ bot",
+            read_only=True,
+            storage_adapter="chatbot.storage.SQLStorageAdapter",
+            preprocessors=[
+                'chatterbot.preprocessors.unescape_html'
+            ],
+            logic_adapters=[
+                {
+                    'import_path':                  'chatbot.logic.BestMatch',
+                    'default_response':             const.BOT_NOT_UNDERSTAND,
+                    'maximum_similarity_threshold':  0.90
+                },
+                {
+                    'import_path':                  'chatbot.logic.SpecificResponseAdapter',
+                    'input_text':                   'Help',
+                    'output_text':                  const.BOT_HELP_MSG
+                }
+            ],
+            database_uri='sqlite:///' + self.db
+        )
+        self.logger = self.chatbot.logger
+        logging.basicConfig(level=logging.INFO)
 
+    # returns a list of files in directory 'loc'
+    def get_files(self, loc):
+        files = []
+        try:
+            files = os.listdir(loc)
+        except (FileNotFoundError, FileExistsError, OSError):
+            self.logger.warning(f"{loc} does not exist or is empty. Skipping...")
 
-def get_files(loc):
-    files = []
-    try:
-        files = os.listdir(loc)
-    except (FileNotFoundError, FileExistsError, OSError):
-        logger.warning(f"{loc} does not exist or is empty. Skipping...")
+        return files
 
-    return files
+    # trains the chatbot
+    def train(self):
+        # initialise trainer
+        trainer = ChatterBotCorpusTrainer(self.chatbot)
 
+        # make sure chatterbot-corpus is installed
+        try:
+            trainer.train("chatterbot.corpus.english.greetings")
+        # show an error message if it's not
+        except (OSError, FileExistsError, FileNotFoundError):
+            self.logger.error("Couldn't find chatterbot-corpus! Are you sure it's installed?\n"
+                              "(try pip install chatterbot-corpus)")
 
-# the functions below are called by the command line commands
-def collect_data(threads, pages, verbose):
-    crawler.run(threads, pages, verbose)
+        # get the file names of files made by the crawler
+        files = self.get_files(const.DATA_DIR_PATH)
+        # iterate over them
+        for file in files:
+            # train the chatbot with each file
+            trainer.train(os.path.join(const.DATA_DIR_PATH, file))
 
+    # returns a response to statement 'statement'
+    def get_response(self, question):
+        return self.chatbot.get_response(question)
 
-def train():
-    trainer = ChatterBotCorpusTrainer(bot)
+    # updates the rating for answer 'answer'
+    def update_rating(self, answer, rating):
+        self.chatbot.storage.update_rating(answer, rating)
 
-    try:
-        trainer.train("chatterbot.corpus.english.greetings")
-    except (OSError, FileExistsError, FileNotFoundError):
-        logger.error("Couldn't find chatterbot-corpus! Are you sure it's installed?\n"
-                     "(pip install chatterbot-corpus)")
+    # initialises and runs a crawler to collect data
+    def collect_data(self, threads, pages, verbose):
+        crawler = Crawler(threads, pages, verbose)
+        crawler.crawl()
 
-    files = get_files(DATA_DIR_PATH)
-    for file in files:
-        trainer.train(os.path.join(DATA_DIR_PATH, file))
+    # deletes the database
+    def del_db(self):
+        try:
+            os.remove(self.db_path)
+        except FileNotFoundError:
+            self.logger.warning(f"{self.db_path} does not exist.")
+        # try and gain permissions to delete the file
+        except PermissionError:
+            self.logger.warning(f"{self.db_path} is open in another program and cannot be deleted.")
+            os.chmod(self.db_path, stat.S_IWRITE)
+            os.remove(self.db_path)
 
+    # deletes the training data
+    def clean(self):
+        files = self.get_files(const.DATA_DIR_PATH)
 
-def del_db():
-    try:
-        os.remove(DB_FILE_PATH)
-    except FileNotFoundError:
-        logger.warning(f"{DB_FILE_PATH} does not exist.")
-    except PermissionError:
-        logger.warning(f"{DB_FILE_PATH} is open in another program and cannot be deleted.")
-        os.chmod(DB_FILE_PATH, stat.S_IWRITE)
-        os.remove(DB_FILE_PATH)
+        for file in files:
+            os.remove(os.path.join(const.DATA_DIR_PATH, file))
 
+        self.logger.info(f"Deleted {len(files)} files from {const.DATA_DIR_PATH}")
 
-def clean():
-    files = get_files(DATA_DIR_PATH)
-
-    for file in files:
-        os.remove(os.path.join(DATA_DIR_PATH, file))
-    logger.info(f"Deleted {len(files)} files from {DATA_DIR_PATH}")
-    try:
-        os.rmdir(DATA_DIR_PATH)
-    except (FileNotFoundError, OSError):
-        logger.info(f"{DATA_DIR_PATH} does not exist. Skipping.")
-
-
-def abort_if_false(ctx, param, value):
-    if not value:
-        ctx.abort()
-
-
-# define command line commands
-@click.command('crawl', help="Collect training data from Stack Overflow.")
-@click.option('-t', '--threads', default=3, help="Number of threads to be used when crawling.")
-@click.option('-p', '--pages', default=1, help="Number of pages to be crawled by each thread.")
-@click.option('-v', '--verbose', flag_value="True", help="Print more output.")
-@with_appcontext
-def crawl_command(threads, pages, verbose):
-    # click.echo("Verbose output is {}.".format('on' if verbose else 'off'))
-    click.echo(f"\nUsing {threads} threads\n"
-               f"({pages} pages per thread)\n")
-    collect_data(threads, pages, verbose)
-
-
-@click.command('train', help="Train the chatbot with the data stored in /chatbot/training_data/")
-@with_appcontext
-def train_command():
-    train()
-
-
-@click.command('del_db', help="DELETE the database the chatbot uses.")
-@click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
-              expose_value=False,
-              prompt='Are you sure you want to DELETE the database?',
-              help="Don't show confirmation prompt.")
-@with_appcontext
-def del_command():
-    # click.echo("\n\nWARNING: The chatbot database will be DELETED.")
-    del_db()
-
-
-@click.command('clean', help="DELETE the training data stored in /chatbot/training_data/")
-@click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
-              expose_value=False,
-              prompt='Are you sure you want to DELETE the training data?',
-              help="Don't show confirmation prompt.")
-@with_appcontext
-def clean_command():
-    clean()
-    del_db()
-
-
-# register command line commands
-def init_app(app):
-    app.cli.add_command(train_command)
-    app.cli.add_command(crawl_command)
-    app.cli.add_command(del_command)
-    app.cli.add_command(clean_command)
-
-
-# returns a response to a certain question
-def get_bot_response(question):
-    response = bot.get_response(question)
-
-    pair = (question, response)
-    cached_responses.append(pair)
-
-    return response
-
-
-def give_feedback(answer, feedback):
-    if feedback is 'yes':
-        value = 1
-    else:
-        value = -1
-
-    bot.storage.update_rating(answer, value)
+        try:
+            os.rmdir(const.DATA_DIR_PATH)
+        except (FileNotFoundError, OSError):
+            self.logger.info(f"{const.DATA_DIR_PATH} does not exist. Skipping.")

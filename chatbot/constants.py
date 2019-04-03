@@ -3,17 +3,20 @@ import os
 # File paths
 PROJECT_ROOT = os.getcwd()
 FLASK_APP_ROOT = os.path.join(PROJECT_ROOT, "chatbot")
-DB_FILE = 'db.sqlite3'
-DB_FILE_PATH = os.path.join(PROJECT_ROOT, DB_FILE)
+DB_FILE = 'db'
+DB_FILE_EXT = '.sqlite3'
+DB_FILE_PATH = os.path.join(PROJECT_ROOT, DB_FILE + DB_FILE_EXT)
 DATA_DIR = "training_data"
 DATA_DIR_PATH = os.path.join(FLASK_APP_ROOT, DATA_DIR)
 
 # Chatbot help message
-BOT_HELP_MSG = '<ul>' \
-               '<li>You can type <b>help</b> to show this message. </li>' \
-               '<li> After you ask a question, you can type <b>alternate response</b> ' \
-               'to get another answer if the original one wasn\'t helpful.</li>' \
-               '<li> Giving feedback for answers helps the bot answer questions more accurately.</li>' \
+BOT_HELP_MSG = '<ul class="fa-ul">' \
+               '<li><span class="fa-li"><i class="fas fa-check"></i></span>You can type <b>help</b> in the chat or click the "Help" button in the ' \
+               'menu at the top of the page to show this message. </li>' \
+               '<li><span class="fa-li" ><i class="fas fa-check"></i></span>After you ask a question, you can type <b>alternate response</b> in the chat ' \
+               'to get another answer to your last question. Alternatively, you can click the "Alternate response" button at the end of the original response.</li>' \
+               '<li><span class="fa-li" ><i class="fas fa-check"></i></span>At the bottom of each message box, you are able to give feedback for each ' \
+               'answer and you are encouraged to do so. This helps the bot answer questions more accurately!</li>' \
                '</ul>'
 
 BOT_NOT_UNDERSTAND = "I am sorry, but I do not understand."
@@ -31,7 +34,9 @@ headers = {
 # stack overflow
 SO_URL = 'http://stackoverflow.com/'
 # questions tagged 'c++'
-BASE_URL = 'https://stackoverflow.com/questions/tagged/c%2b%2b'
+BASE_URL = 'https://stackoverflow.com/questions/tagged/'
+# tag evaluates to c++
+QUESTIONS_TAG = 'c%2b%2b'
 # sort by votes
 SORT = '?sort=votes'
 # current page
