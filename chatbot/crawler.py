@@ -66,8 +66,6 @@ class Crawler:
         with open(out_file, 'w+', encoding="utf-8") as outfile:
             yaml.dump(formatted_data, outfile)
 
-        # extracts the question text and a list of answers from a single question on StackOverflow
-
     # parses a question at a given URL
     def parse_question(self, url, title, data):
         # page to be scraped

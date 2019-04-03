@@ -16,6 +16,8 @@ h1 {
     height: 77vh !important;
     overflow-y: auto;
     overflow-x: hidden;
+    border: 1px solid darkgray;
+    border-radius: 8px;
 }
 
 .force-to-bottom {

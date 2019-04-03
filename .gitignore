@@ -263,3 +263,5 @@ fabric.properties
 
 PA_TOKEN.py
 training_data/
+
+*.png
