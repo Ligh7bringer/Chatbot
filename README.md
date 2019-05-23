@@ -1,8 +1,13 @@
-# :zap: Honours Project 2018 - 2019 :zap:
+# Honours Project 2018 - 2019 
 A chatbot which can answer C++ questions based on data collected from [Stack Overflow](https://stackoverflow.com/questions/tagged/c%2b%2b?sort=votes&pageSize=15).
 
-# Demo
+# Features
+* Command line inteface for easier data collection, training, and deleting of files.
+* Alternate responses.
+* Rating responses.
+* Responsive design.
 
+# Demo
 There is a live demo of the project at [https://ligh7bringer.pythonanywhere.com/](https://ligh7bringer.pythonanywhere.com/).
 
 # Repo Status
@@ -24,8 +29,6 @@ There is a live demo of the project at [https://ligh7bringer.pythonanywhere.com/
 # Commands
 After installing the required libraries, your options are:
 
-
-
 - ```flask --help``` - shows the available commands
 - ```flask crawl ``` - collects data from Stack Overflow which can be later used for training the bot (stored in **chatbot/training_data/**). Optional command line arguments are:
   - ``-t, --threads <number of threads to be used>``	
@@ -39,5 +42,8 @@ After installing the required libraries, your options are:
 - `` flask run `` - runs a local server. The website can be accessed at **127.0.0.1:5000**
 
 # Tests
-
 Unit tests can be run from the root folder of the project with the command ``pytest`` *after* installing the dependencies.
+
+# Screenshots
+![sc2](https://i.imgur.com/F6mJc9ol.jpg)
+![sc3](https://i.imgur.com/lVvbKebl.jpg)
