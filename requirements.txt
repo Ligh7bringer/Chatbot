@@ -3,7 +3,7 @@ Bootstrap-Flask==1.0.10
 bs4==0.0.1
 ChatterBot==1.0.4
 chatterbot-corpus==1.2.0
-codecov==2.0.15
+codecov==2.0.16
 Flask==1.0.2
 GitPython==2.1.11
 lxml==4.3.2
