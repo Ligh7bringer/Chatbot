@@ -4,7 +4,7 @@ bs4==0.0.1
 ChatterBot==1.0.4
 chatterbot-corpus==1.2.0
 codecov==2.0.15
-Flask==1.0.2
+Flask==2.3.2
 GitPython==2.1.11
 lxml==4.3.2
 pytest==4.3.1
