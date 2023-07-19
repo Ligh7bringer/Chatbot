@@ -5,7 +5,7 @@ ChatterBot==1.0.4
 chatterbot-corpus==1.2.0
 codecov==2.0.15
 Flask==1.0.2
-GitPython==2.1.11
+GitPython==3.1.30
 lxml==4.3.2
 pytest==4.3.1
 pytest-cov==2.6.1
